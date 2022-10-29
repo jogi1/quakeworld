@@ -1,3 +1,7 @@
+//! library for doing quakeworld things
+#[macro_use]
+extern crate lazy_static;
+
 extern crate simple_error;
 #[cfg(feature = "utils")]
 pub mod utils;
@@ -5,6 +9,8 @@ pub mod utils;
 pub mod protocol;
 #[cfg(feature = "mvd")]
 pub mod mvd;
+#[cfg(feature = "state")]
+pub mod state;
 
 #[cfg(test)]
 mod tests {

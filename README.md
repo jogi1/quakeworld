@@ -9,6 +9,9 @@ A rust library for working with quakeworld.
  * mvd
    * [quakeworld::mvd::Mvd](./src/mvd/mod.rs) - parsing mvd file format
 
+ * state
+   * [quakeworld::state::State](./src/state/mod.rs) - using Message types to create a game state
+
  * utils 
    * [quakeworld::utils::AsciiConverter](./src/utils/ascii_converter.rs) - converting byte arrays to printable ascii
 
@@ -19,7 +22,6 @@ Everything is serializable via [serde](https://github.com/serde-rs/serde) (json,
 
 ### Goals 
 probably in order of being implemented too
-* state - generating a game state by consuming types
 * network - client
 * qwd - qwd format parsing
 * mvd - creating a mvd from states

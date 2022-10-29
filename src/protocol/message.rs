@@ -40,7 +40,7 @@ impl MessageFlags {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub struct ReadTrace {
     pub start: usize,
     pub length: usize,
@@ -48,7 +48,7 @@ pub struct ReadTrace {
     pub function: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub struct Message
 {
     pub start: usize, // starting position in the buffer
