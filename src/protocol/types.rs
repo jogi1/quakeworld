@@ -12,7 +12,7 @@ use protocol_macros::ParseMessage;
 pub type StringByte = Vec<u8>;
 
 #[cfg(feature = "ascii_strings")]
-#[derive(PartialOrd, PartialEq, Clone, Debug, Serialize)]
+#[derive(PartialOrd, PartialEq, Clone, Debug, Serialize, Default)]
 pub struct StringByte {
     pub bytes: Vec<u8>,
     pub string: String,
@@ -20,8 +20,9 @@ pub struct StringByte {
 
 pub type StringVector = Vec<StringByte>;
 
+
 pub type Coordinate = f32;
-#[derive(Debug, PartialEq, PartialOrd, Default, Serialize)]
+#[derive(Debug, PartialEq, PartialOrd, Default, Serialize, Clone, Copy)]
 pub struct CoordinateVector { 
     pub x: Coordinate,
     pub y: Coordinate,
@@ -37,6 +38,17 @@ pub struct CoordinateVectorOption {
 }
 
 impl CoordinateVectorOption {
+    pub fn apply_to(&self, target: &mut CoordinateVector) {
+        if self.x.is_some() {
+            target.x = self.x.unwrap();
+        }
+        if self.y.is_some() {
+            target.y = self.y.unwrap();
+        }
+        if self.z.is_some() {
+            target.z = self.z.unwrap();
+        }
+    }
     fn empty() -> CoordinateVectorOption {
         return CoordinateVectorOption{
             x: None,
@@ -55,7 +67,7 @@ impl CoordinateVectorOption {
 }
 
 pub type Angle = f32;
-#[derive(Debug, PartialEq, PartialOrd, Serialize)]
+#[derive(Debug, PartialEq, PartialOrd, Serialize, Default, Copy, Clone)]
 pub struct AngleVector { 
     pub x: Angle,
     pub y: Angle,
@@ -71,6 +83,17 @@ pub struct AngleVectorOption {
 }
 
 impl AngleVectorOption {
+    pub fn apply_to(&self, target: &mut AngleVector) {
+        if self.x.is_some() {
+            target.x = self.x.unwrap();
+        }
+        if self.y.is_some() {
+            target.y = self.y.unwrap();
+        }
+        if self.z.is_some() {
+            target.z = self.z.unwrap();
+        }
+    }
     fn empty() -> AngleVectorOption {
         return AngleVectorOption{
             x: None,
@@ -102,14 +125,18 @@ pub enum DemoCommand {
 }
 
 
-#[derive(Debug, Eq, PartialEq, PartialOrd, Ord, TryFromPrimitive, Display, Clone, Serialize)]
+#[derive(Debug, Eq, PartialEq, PartialOrd, Ord, TryFromPrimitive, Display, Clone, Serialize, Default)]
 #[repr(u32)]
 pub enum ProtocolVersion {
+    #[default]
+    None = 0,
 	Standard = 28,
     Fte = u32::from_ne_bytes(*b"FTEX"),
     Fte2 = u32::from_ne_bytes(*b"FTE2"),
     Mvd1 = u32::from_ne_bytes(*b"MVD1"),
 }
+
+pub const OOB_HEADER: u32 = 0xFFFFFFFF;
 
 #[derive(Debug, Eq, PartialEq, PartialOrd, Ord, TryFromPrimitive, Display, Serialize)]
 #[repr(u32)]
@@ -127,7 +154,7 @@ pub enum ProtocolExtensionFte {
 }
 
 
-#[derive(Debug, PartialEq, PartialOrd, Clone, Serialize)]
+#[derive(Debug, PartialEq, PartialOrd, Clone, Serialize, Default)]
 pub struct Serverdata {
     pub protocol: ProtocolVersion,
     pub fte_protocol_extension: FteProtocolExtensions,
@@ -151,6 +178,9 @@ impl Serverdata {
             protocol = ProtocolVersion::try_from(p)?;
 
             match protocol {
+                ProtocolVersion::None => {
+                    return Err(MessageError::StringError("ProtocolVersion None(0) should never happen, probable parser error".to_string()))
+                },
                 ProtocolVersion::Standard => break,
                 ProtocolVersion::Mvd1 => {
                     let u = message.read_u32(false)?;
@@ -219,7 +249,7 @@ pub struct Stufftext {
     pub text: StringByte 
 }
 
-#[derive(Debug, PartialEq, PartialOrd, ParseMessage, Serialize)]
+#[derive(Debug, PartialEq, PartialOrd, ParseMessage, Serialize, Default, Copy, Clone)]
 pub struct Spawnstatic {
     pub model_index: u8,
     pub model_frame: u8,
@@ -229,7 +259,7 @@ pub struct Spawnstatic {
     pub angle: AngleVector
 }
 
-#[derive(Debug, PartialEq, PartialOrd, ParseMessage, Serialize)]
+#[derive(Debug, PartialEq, PartialOrd, ParseMessage, Serialize, Default)]
 pub struct Spawnbaseline {
     pub index: u16,
     pub model_index: u8,
@@ -240,7 +270,7 @@ pub struct Spawnbaseline {
     pub angle: AngleVector
 }
 
-#[derive(Debug, PartialEq, PartialOrd, ParseMessage, Serialize)]
+#[derive(Debug, PartialEq, PartialOrd, ParseMessage, Serialize, Clone, Default)]
 pub struct Spawnstaticsound{
     pub origin: CoordinateVector,
     pub index: u8,
@@ -251,13 +281,13 @@ pub struct Spawnstaticsound{
 #[derive(Debug, PartialEq, PartialOrd, ParseMessage, Serialize)]
 pub struct Updatefrags {
     pub player_number: u8,
-    pub frags: u16
+    pub frags: i16
 }
 
 #[derive(Debug, PartialEq, PartialOrd, ParseMessage, Serialize)]
 pub struct Updateping {
     pub player_number: u8,
-    pub frags: u16
+    pub ping: u16
 }
 
 #[derive(Debug, PartialEq, PartialOrd, ParseMessage, Serialize)]
@@ -269,7 +299,7 @@ pub struct Updatepl {
 #[derive(Debug, PartialEq, PartialOrd, ParseMessage, Serialize)]
 pub struct Updateentertime {
     pub player_number: u8,
-    pub entertime: f32
+    pub entertime: f32,
 }
 
 #[derive(Debug, PartialEq, PartialOrd, ParseMessage, Serialize)]
@@ -282,13 +312,13 @@ pub struct Updateuserinfo {
 #[derive(Debug, PartialEq, PartialOrd, ParseMessage, Serialize)]
 pub struct Updatestatlong{
     pub stat: u8,
-    pub value: u32
+    pub value: i32
 }
 
 #[derive(Debug, PartialEq, PartialOrd, ParseMessage, Serialize)]
 pub struct Updatestat{
     pub stat: u8,
-    pub value: u8
+    pub value: i8
 }
 
 #[derive(Debug, PartialEq, PartialOrd, ParseMessage, Serialize)]
@@ -428,7 +458,7 @@ impl Playerinfo  {
 }
 
 bitflags! {
-#[derive(Serialize)]
+#[derive(Serialize, Default)]
     pub struct FteProtocolExtensions: u32 {
 	const TRANS             = 0x00000008; // .alpha support
 	const ACCURATETIMINGS   = 0x00000040;
@@ -444,7 +474,7 @@ bitflags! {
 }
 
 bitflags! {
-#[derive(Serialize)]
+#[derive(Serialize,Default)]
     pub struct MvdProtocolExtensions: u32 {
         const FLOATCOORDS = 0x00000001; // FTE_PEXT_FLOATCOORDS but for entity/player coords only
         const HIGHLAGTELEPORT = 0x00000002; // Adjust movement direction for frames following teleport
@@ -474,7 +504,7 @@ bitflags! {
 
 #[derive(Debug, PartialEq, PartialOrd, Serialize)]
 pub struct Packetentity {
-    pub baseline_index: u8,
+    pub entity_index: u16,
     pub bits: u16,
     pub remove: bool,
     pub model: Option<u8>,
@@ -501,7 +531,7 @@ impl Packetentities  {
             if bits == 0 {
                 break
             }
-            let baseline_index = (bits & 511) as u8;
+            let baseline_index = (bits & 511) as u16;
             bits = bits & !511;
             let mut flags = UpdateTypes::from_bits_truncate(bits);
             if flags.contains(UpdateTypes::MOREBITS) {
@@ -590,7 +620,7 @@ impl Packetentities  {
             }
 
             let p = Packetentity{
-                baseline_index,
+                entity_index: baseline_index,
                 bits,
                 remove,
                 model,
@@ -630,7 +660,7 @@ impl Deltapacketentities  {
             if bits == 0 {
                 break
             }
-            let baseline_index = (bits & 511) as u8;
+            let baseline_index = (bits & 511) as u16;
             bits = bits & !511;
             let mut flags = UpdateTypes::from_bits_truncate(bits);
             if flags.contains(UpdateTypes::MOREBITS) {
@@ -723,7 +753,7 @@ impl Deltapacketentities  {
             }
 
             let p = Packetentity{
-                baseline_index,
+                entity_index: baseline_index,
                 bits,
                 remove,
                 model,
@@ -830,7 +860,7 @@ pub struct Bigkick {
 
 #[derive(Debug, PartialEq, PartialOrd, ParseMessage, Serialize)]
 pub struct Muzzleflash {
-    pub unknown: u16,
+    pub entity_index: u16,
 }
 
 #[derive(Debug, PartialEq, PartialOrd, ParseMessage, Serialize)]
@@ -851,7 +881,7 @@ pub struct Disconnect {
 
 
 
-#[derive(Debug, Eq, PartialEq, PartialOrd, Ord, TryFromPrimitive, Display, Serialize)]
+#[derive(Debug, Eq, PartialEq, PartialOrd, Ord, TryFromPrimitive, Display, Serialize, Clone)]
 #[repr(u8)]
 pub enum TempEntityType {
     Spike = 0,
@@ -870,7 +900,7 @@ pub enum TempEntityType {
     LightningBlood
 }
 
-#[derive(Debug, PartialEq, PartialOrd, Serialize)]
+#[derive(Debug, PartialEq, PartialOrd, Serialize, Clone)]
 pub struct Tempentity {
     pub r#type: TempEntityType,
     pub origin: CoordinateVector,
