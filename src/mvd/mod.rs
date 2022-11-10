@@ -8,14 +8,27 @@ use crate::protocol::errors::MvdParseError;
 use crate::utils::ascii_converter::AsciiConverter;
 
 
+#[derive(Serialize)]
+pub struct MvdTarget {
+    pub to: u32,
+    pub command: DemoCommand,
+}
+
+impl Default for MvdTarget {
+    fn default() -> Self {
+        return MvdTarget {
+        to: 0,
+        command: DemoCommand::Empty,
+        }
+    }
+}
 
 #[derive(Serialize)]
 pub struct Mvd {
     pub size: usize,
     pub finished: bool,
     message: Message,
-    last_to: u32,
-    last_command_type: DemoCommand,
+    last: MvdTarget,
     pub frame: u32,
     pub time: f64,
 }
@@ -25,18 +38,17 @@ pub struct MvdFrame {
     pub messages: Vec<ServerMessage>,
     pub frame: u32,
     pub time: f64,
-    pub to: u32,
-    pub command_type: DemoCommand,
+    pub last: MvdTarget,
 }
 
 impl MvdFrame {
     fn empty() -> MvdFrame {
         return MvdFrame {
-            command_type: DemoCommand::Empty,
             messages: vec!(),
             frame: 0,
-            to: 0,
-            time: 0.0}
+            time: 0.0,
+            last: MvdTarget { ..Default::default() }
+        }
     }
 }
 
@@ -46,8 +58,7 @@ impl Mvd {
             size:0,
             message: Message::empty(),
             finished: false,
-            last_to: 0,
-            last_command_type: DemoCommand::Empty,
+            last: MvdTarget{ ..Default::default()},
             frame: 0,
             time: 0.0,
         }
@@ -62,8 +73,7 @@ impl Mvd {
             size:buffer.len(),
             message,
             finished: false,
-            last_to: 0,
-            last_command_type: DemoCommand::Empty,
+            last: MvdTarget{ ..Default::default() },
             frame: 0,
             time: 0.0,
         })
@@ -76,10 +86,9 @@ impl Mvd {
 
         return Ok(Mvd {
             size:buffer.len(),
-            message,
+            message: message.clone(),
             finished: false,
-            last_to: 0,
-            last_command_type: DemoCommand::Empty,
+            last: MvdTarget{ ..Default::default()},
             frame: 0,
             time: 0.0,
         })
@@ -103,24 +112,24 @@ impl Mvd {
         if msg_type == DemoCommand::Command {
             return Err(MvdParseError::QwdCommand)
         }
-        frame.command_type = msg_type;
+        frame.last.command = msg_type;
         if msg_type >= DemoCommand::Multiple && msg_type <= DemoCommand::All {
             match msg_type {
                 DemoCommand::Multiple => {
-                    self.last_to = self.message.read_u32(false)?;
-                    self.last_command_type = msg_type;
+                    self.last.to = self.message.read_u32(false)?;
+                    self.last.command = msg_type;
                 }
                 DemoCommand::Single => {
-                    self.last_to = (cmd >> 3) as u32;
-                    self.last_command_type = msg_type;
+                    self.last.to = (cmd >> 3) as u32;
+                    self.last.command = msg_type;
                 }
                 DemoCommand::All => {
-                    self.last_to = 0;
-                    self.last_command_type = msg_type;
+                    self.last.to = 0;
+                    self.last.command = msg_type;
                 }
                 DemoCommand::Stats => {
-                    self.last_to = 0;
-                    self.last_command_type = msg_type;
+                    self.last.to = (cmd >> 3) as u32;
+                    self.last.command = msg_type;
                 }
                 DemoCommand::Command => {
                 }
@@ -155,7 +164,7 @@ impl Mvd {
 #[cfg(not(feature = "ascii_strings"))]
         let mut message = Message::new(self.message.buffer.clone(), self.message.position, size as usize, false, self.message.flags);
         self.message.position += size as usize;
-        if self.last_command_type == DemoCommand::Multiple && self.last_to == 0 {
+        if self.last.command == DemoCommand::Multiple && self.last.to == 0 {
             return Ok(false)
         }
 
