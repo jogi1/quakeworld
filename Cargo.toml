@@ -4,6 +4,8 @@ version = "0.0.1"
 edition = "2021"
 authors = ["Jürgen Legler <jogihoogi@gmail.com>"]
 license = "MIT"
+homepage = "https://github.com/jogi1/quakeworld"
+repository = "https://github.com/jogi1/quakeworld"
 description = """
 A collection of quakeworld related libraries.
 """
