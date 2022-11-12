@@ -1,5 +1,5 @@
 [package]
-name = "protocol-macros"
+name = "quakeworld-protocol-macros"
 version = "0.0.1"
 edition = "2021"
 authors = ["Jürgen Legler <jogihoogi@gmail.com>"]

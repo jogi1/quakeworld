@@ -21,7 +21,7 @@ protocol = ["protocol-macros"]
 ascii_strings = ["utils"]
 
 [dependencies]
-protocol-macros = { version="0.0.1", path = "./protocol-macros", optional=true }
+protocol-macros = { version="0.0.1", path = "./protocol-macros", package="quakeworld-protocol-macros", optional=true }
 thiserror = "1.0.26"
 num_enum = "0.2.3"
 byteorder = "1.4.3"
