@@ -4,6 +4,12 @@ version = "0.0.1"
 edition = "2021"
 authors = ["Jürgen Legler <jogihoogi@gmail.com>"]
 license = "MIT"
+homepage = "https://github.com/jogi1/quakeworld"
+keywords = ["quakeworld", "quake"]
+repository = "https://github.com/jogi1/quakeworld"
+description = """
+proc-macros for the quakeworld crate.
+"""
 
 [lib]
 proc-macro = true
