@@ -87,7 +87,7 @@ impl Mvd {
 
         Ok(Mvd {
             size:buffer.len(),
-            message,
+            message: message.clone(),
             finished: false,
             last: MvdTarget{ ..Default::default()},
             frame: 0,

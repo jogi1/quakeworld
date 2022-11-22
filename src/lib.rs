@@ -6,7 +6,6 @@ extern crate paste;
 extern crate quote;
 extern crate unstringify;
 
-
 #[cfg(feature = "utils")]
 pub mod utils;
 #[cfg(feature = "protocol")]

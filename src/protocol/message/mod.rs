@@ -523,6 +523,7 @@ impl Message {
     pub fn read_oob_packet(&mut self) -> Result<Packet, MessageError> {
         let _ = self.read_i32(false)?;
         let _packet_type = self.read_u8(false)?;
+        println!("{}", _packet_type);
         let packet_type = CommandCode::try_from(_packet_type)?;
         match packet_type {
             CommandCode::S2cChallenge => {

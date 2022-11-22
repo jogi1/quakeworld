@@ -14,6 +14,7 @@ A rust library for working with quakeworld.
 
  * utils 
    * [quakeworld::utils::AsciiConverter](./src/utils/ascii_converter.rs) - converting byte arrays to printable ascii
+   * [quakeworld::utils::Userinfo](./src/utils/userinfo.rs) - parsing userinfo strings
 
  * ascii_strings - when reading strings they will be converted to printable ascii, original bytes are also being kept see [here](./src/protocol/types.rs#L12)
 
@@ -31,4 +32,5 @@ could be better, aka non existing at the moment
 
 ### Example
   * [minimal mvd parser](./examples/mvd_parser.rs)
+  * [quakeworld swiss army knife](https://github.com/jogi1/qwsak)
   * [more elaborate mvd parser](https://github.com/jogi1/statyr) soon™

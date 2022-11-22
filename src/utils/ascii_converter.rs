@@ -4,6 +4,7 @@ use simple_error::bail;
 use crate::protocol::types::StringByte;
 
 
+
 #[derive(Debug, Serialize,Clone)]
 pub struct AsciiConverter {
     table: Vec<u8>,
@@ -64,4 +65,5 @@ impl AsciiConverter {
         let bytes = bytes.into();
         StringByte{ bytes }
     }
+
 }

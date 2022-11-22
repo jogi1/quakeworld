@@ -355,8 +355,6 @@ bitflags! {
     }
 }
 
-
-
 #[derive(Debug, PartialEq, PartialOrd, Clone, Serialize, Default)]
 pub struct Serverdata {
     pub protocol: ProtocolVersion,
@@ -486,7 +484,6 @@ pub struct Spawnbaseline {
     pub origin: CoordinateVector,
     pub angle: AngleVector
 }
-
 
 #[derive(Debug, PartialEq, PartialOrd, ParseMessage, Serialize, Clone, Default)]
 pub struct Spawnstaticsound{

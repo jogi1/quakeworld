@@ -1,9 +1,12 @@
 [package]
 name = "quakeworld"
-version = "0.0.1"
+version = "0.0.3"
 edition = "2021"
-authors = ["Jürgen Legler"]
+authors = ["Jürgen Legler <jogihoogi@gmail.com>"]
 license = "MIT"
+keywords = ["quakeworld", "quake"]
+homepage = "https://github.com/jogi1/quakeworld"
+repository = "https://github.com/jogi1/quakeworld"
 description = """
 A collection of quakeworld related libraries.
 """
@@ -23,7 +26,7 @@ trace = []
 crc = []
 
 [dependencies]
-protocol-macros = { path = "./protocol-macros", optional=true }
+protocol-macros = { version="0.0.1", path = "./protocol-macros", package="quakeworld-protocol-macros", optional=true }
 thiserror = "1.0.26"
 num_enum = "0.2.3"
 byteorder = "1.4.3"
