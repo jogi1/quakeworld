@@ -6,6 +6,10 @@ A rust library for working with quakeworld.
    * [quakeworld::protocol::message::Message](./src/protocol/message/mod.rs) - reading data types from a byte array
    * [quakeworld::protocol::types](./src/protocol/types.rs) - data types
 
+* network
+   * [quakeworld::network::channel::Channel](./src/protocol/channel.rs) - keeps track of connection sequences
+   * [quakeworld::network::connection::client::Client](./src/protocol/connection/client.rs) - client implementation that handles packets and provides packets that need to be send to keep up a connection with a server. See [here](./example/client.rs) for a minimal client implimentation. Only tested with `mvdsv 0.36-dev`.
+
  * mvd
    * [quakeworld::mvd::Mvd](./src/mvd/mod.rs) - parsing mvd file format
 
