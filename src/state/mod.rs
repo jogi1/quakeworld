@@ -53,14 +53,14 @@ impl Player {
 
 #[derive(Serialize, Copy, Clone, Debug, Default)]
 pub struct Entity {
-    pub index: u8,
-    pub model: u8,
+    pub index: u16,
+    pub model: u16,
     pub frame: u8,
     pub colormap: u8,
     pub skinnum: u8,
     pub effects: u8,
     pub origin: CoordinateVector,
-    pub angle: AngleVector
+    pub angle: AngleVector,
 }
 
 impl Entity {
@@ -99,8 +99,8 @@ impl Entity {
 
     /// create [`Entity`] from [`ServerMessage::Spawnbaseline`]
     pub fn from_baseline(baseline: &Spawnbaseline) -> Entity {
-        return Entity {
-            index: baseline.model_index,
+        Entity {
+            index: baseline.model_index as u16,
             frame: baseline.model_frame,
             colormap: baseline.colormap,
             skinnum: baseline.skinnum,
@@ -112,8 +112,8 @@ impl Entity {
 
     /// create [`Entity`] from [`ServerMessage::Spawnstatic`]
     pub fn from_static(static_ent: &Spawnstatic) -> Entity {
-        return Entity {
-            index: static_ent.model_index,
+        Entity {
+            index: static_ent.model_index as u16,
             frame: static_ent.model_frame,
             colormap: static_ent.colormap,
             skinnum: static_ent.skinnum,
@@ -133,8 +133,8 @@ impl Entity {
         if packet_entity.origin.is_some() {
             packet_entity.origin.unwrap().apply_to(&mut origin);
         }
-        return Entity {
-            index: packet_entity.entity_index as u8,
+        Entity {
+            index: packet_entity.entity_index as u16,
             frame: packet_entity.frame.unwrap_or(0),
             model: packet_entity.model.unwrap_or(0),
             colormap: packet_entity.colormap.unwrap_or(0),
@@ -182,28 +182,35 @@ pub struct State {
 
 impl State {
     pub fn new() -> State {
-        return State{
+        State{
             ..Default::default()
         }
     }
 
 #[cfg(feature = "ascii_strings")]
     pub fn new_with_ascii_conveter(ascii_converter: AsciiConverter) -> State {
-        return State{
+        State{
             ascii_converter,
             ..Default::default()
         }
     }
 
     fn update_player(&mut self, player_index: u16, message: &ServerMessage) {
-        let player: &mut Player;
         let p = self.players.get_mut(&player_index);
-        if p.is_some() {
-            player = p.unwrap();
+        let mut player = match p {
+            Some(player) =>  player,
+            None => { self.players.insert(player_index, Player{..Default::default()});
+                self.players.get_mut(&player_index).unwrap()
+            },
+        };
+        /*
+        if let Some(player) = p {
+            player
         } else {
             self.players.insert(player_index, Player{..Default::default()});
-            player = self.players.get_mut(&player_index).unwrap();
-        }
+            self.players.get_mut(&player_index).unwrap()
+        };
+        */
         match message {
             ServerMessage::Updatefrags(data) => {
                 player.frags = data.frags;
@@ -222,7 +229,9 @@ impl State {
                 player.userinfo.update(&data.userinfo);
                 player.update_userinfo();
             }
-            ServerMessage::Playerinfo(data) => {
+            ServerMessage::Playerinfo(_data) => {
+                panic!("FIXME");
+                /*
                 if data.origin.is_some() {
                     data.origin.unwrap().apply_to(&mut player.origin);
                 }
@@ -233,6 +242,7 @@ impl State {
                 player.skinnum = data.skinnum.unwrap_or(0);
                 player.effects = data.effects.unwrap_or(0);
                 player.weaponframe = data.weaponframe.unwrap_or(0);
+                */
             }
             ServerMessage::Updatestatlong(data) => {
                 player.stats[data.stat as usize] = data.value;
@@ -253,7 +263,7 @@ impl State {
 
     fn packet_entities(&mut self, packet_entities: &Packetentities) {
         for packet_entity in &packet_entities.entities {
-            self.baseline_entities.insert(packet_entity.entity_index, Entity::from_packetentity(&packet_entity));
+            self.baseline_entities.insert(packet_entity.entity_index, Entity::from_packetentity(packet_entity));
         }
     }
 
@@ -263,9 +273,8 @@ impl State {
                 self.entities.remove(&deltapacket_entity.entity_index);
             } else {
                 let e = self.entities.get_mut(&deltapacket_entity.entity_index);
-                if e.is_some() {
-                    let eu = e.unwrap();
-                    eu.apply_delta(deltapacket_entity);
+                if let Some(value) = e {
+                    value.apply_delta(deltapacket_entity);
                 } else {
                     // @TODO: FIXME
                     //println!("{:?}", deltapacket_entity);
@@ -280,7 +289,7 @@ impl State {
         self.temp_entities.insert(temp_entity.entity,  temp_entity.clone());
     }
 
-    pub fn apply_messages_mvd<'c>(&mut self, messages: &'c Vec<ServerMessage>, last: MvdTarget) {
+    pub fn apply_messages_mvd(&mut self, messages: &'_ Vec<ServerMessage>, last: MvdTarget) {
         for message in messages {
             match message {
                 ServerMessage::Serverdata(data) => {
@@ -293,10 +302,10 @@ impl State {
                     self.models.extend(data.models.clone());
                 }
                 ServerMessage::Spawnbaseline(data) => {
-                    self.baseline_entities.insert(data.index, Entity::from_baseline(&data));
+                    self.baseline_entities.insert(data.index, Entity::from_baseline(data));
                 }
                 ServerMessage::Spawnstatic(data) => {
-                    self.static_entities.push(data.clone())
+                    self.static_entities.push(*data)
                 }
                 ServerMessage::Cdtrack(_) => {
                     continue
@@ -322,8 +331,11 @@ impl State {
                 ServerMessage::Updateuserinfo(data) => {
                     self.update_player(data.player_number as u16, message);
                 }
-                ServerMessage::Playerinfo(data) => {
+                ServerMessage::Playerinfo(_data) => {
+                    panic!("FIXME");
+                    /*
                     self.update_player(data.player_number as u16, message);
+                    */
                 }
                 ServerMessage::Updatestatlong(_) => {
                     self.update_player(last.to as u16, message);
@@ -344,13 +356,13 @@ impl State {
                     // ignore
                 }
                 ServerMessage::Packetentities(data) => {
-                    self.packet_entities(&data);
+                    self.packet_entities(data);
                 }
                 ServerMessage::Deltapacketentities(data) => {
-                    self.deltapacket_entities(&data);
+                    self.deltapacket_entities(data);
                 }
                 ServerMessage::Tempentity(data) => {
-                    self.temp_entities(&data);
+                    self.temp_entities(data);
                 }
                 ServerMessage::Print(_) => {
                     // ignore
@@ -387,7 +399,7 @@ impl State {
         }
     }
 
-    pub fn apply_messages<'c>(&mut self, messages: &'c Vec<ServerMessage>) {
+    pub fn apply_messages(&mut self, messages: &'_ Vec<ServerMessage>) {
         for message in messages {
             match message {
                 ServerMessage::Serverdata(data) => {
@@ -400,10 +412,10 @@ impl State {
                     self.models.extend(data.models.clone());
                 }
                 ServerMessage::Spawnbaseline(data) => {
-                    self.baseline_entities.insert(data.index, Entity::from_baseline(&data));
+                    self.baseline_entities.insert(data.index, Entity::from_baseline(data));
                 }
                 ServerMessage::Spawnstatic(data) => {
-                    self.static_entities.push(data.clone())
+                    self.static_entities.push(*data)
                 }
                 ServerMessage::Cdtrack(_) => {
                     continue
@@ -429,8 +441,9 @@ impl State {
                 ServerMessage::Updateuserinfo(data) => {
                     self.update_player(data.player_number as u16, message);
                 }
-                ServerMessage::Playerinfo(data) => {
-                    self.update_player(data.player_number as u16, message);
+                ServerMessage::Playerinfo(_data) => {
+                    panic!("FIXME");
+                    //self.update_player(data.player_number as u16, message);
                 }
                 ServerMessage::Updatestatlong(_) => {
                 //    self.update_player(last_to as u16, message);
@@ -451,13 +464,13 @@ impl State {
                     // ignore
                 }
                 ServerMessage::Packetentities(data) => {
-                    self.packet_entities(&data);
+                    self.packet_entities(data);
                 }
                 ServerMessage::Deltapacketentities(data) => {
-                    self.deltapacket_entities(&data);
+                    self.deltapacket_entities(data);
                 }
                 ServerMessage::Tempentity(data) => {
-                    self.temp_entities(&data);
+                    self.temp_entities(data);
                 }
                 ServerMessage::Print(_) => {
                     // ignore

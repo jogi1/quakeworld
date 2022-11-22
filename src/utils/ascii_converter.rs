@@ -1,6 +1,7 @@
 use std::error::Error;
 use serde::Serialize;
 use simple_error::bail;
+use crate::protocol::types::StringByte;
 
 
 #[derive(Debug, Serialize,Clone)]
@@ -26,12 +27,12 @@ impl Default for AsciiConverter {
 }
 
 impl AsciiConverter {
-    pub fn new_with_table(table: Box<Vec<u8>>) -> Result<AsciiConverter, Box<dyn Error>> {
+    pub fn new_with_table(table: Vec<u8>) -> Result<AsciiConverter, Box<dyn Error>> {
         if table.len() != 256 {
             bail!("table size needs to be 256 was {}", table.len())
         }
-        return Ok(AsciiConverter{
-            table: *table,
+        Ok(AsciiConverter{
+            table,
         })
     }
 
@@ -40,11 +41,27 @@ impl AsciiConverter {
             ..Default::default()
         }
     }
-    pub fn convert(&self, string: &Vec<u8>) -> String {
+    pub fn convert(&self, string: impl Into<Vec<u8>>) -> String {
+        let string = string.into();
         let mut out:String = String::new();
         for c in string {
-            out.push(self.table[*c as usize] as char);
+            out.push(self.table[c as usize] as char);
         }
-        return out
+        out
+    }
+
+    pub fn convert_single(&self, single: u8) -> u8 {
+        self.table[single as usize]
+    }
+
+#[cfg(feature = "ascii_strings")]
+    pub fn convert_to_stringbyte(&self, bytes: impl Into<Vec<u8>>) -> StringByte {
+        let bytes = bytes.into();
+        StringByte::new(bytes.to_vec(), self)
+    }
+#[cfg(not(feature = "ascii_strings"))]
+    pub fn convert_to_stringbyte(&self, bytes: impl Into<Vec<u8>>) -> StringByte {
+        let bytes = bytes.into();
+        StringByte{ bytes }
     }
 }
