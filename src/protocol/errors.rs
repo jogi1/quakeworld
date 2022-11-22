@@ -1,5 +1,5 @@
 use thiserror::Error;
-use crate::protocol::message::MessageError;
+use crate::protocol::message::errors::MessageError;
 
 #[derive(Error, Debug)]
 pub enum MvdParseError {
@@ -15,7 +15,7 @@ pub enum MvdParseError {
 
 impl From<MessageError> for MvdParseError {
     fn from(err: MessageError) -> MvdParseError {
-        return MvdParseError::MessageError(err);
+        MvdParseError::MessageError(err)
     }
 }
 

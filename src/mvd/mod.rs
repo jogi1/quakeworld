@@ -1,6 +1,7 @@
 use serde::Serialize;
 use crate::protocol::message::Message;
 use crate::protocol::message::MessageFlags;
+use crate::protocol::message::MessageType;
 use crate::protocol::types::*;
 use crate::protocol::errors::MvdParseError;
 
@@ -16,7 +17,7 @@ pub struct MvdTarget {
 
 impl Default for MvdTarget {
     fn default() -> Self {
-        return MvdTarget {
+        MvdTarget {
         to: 0,
         command: DemoCommand::Empty,
         }
@@ -43,7 +44,7 @@ pub struct MvdFrame {
 
 impl MvdFrame {
     fn empty() -> MvdFrame {
-        return MvdFrame {
+        MvdFrame {
             messages: vec!(),
             frame: 0,
             time: 0.0,
@@ -54,7 +55,7 @@ impl MvdFrame {
 
 impl Mvd {
     pub fn empty() -> Mvd {
-        return Mvd {
+        Mvd {
             size:0,
             message: Message::empty(),
             finished: false,
@@ -67,9 +68,9 @@ impl Mvd {
 #[cfg(not(feature = "ascii_strings"))]
     pub fn new(buffer: Vec<u8>) -> Result<Mvd, std::io::Error> {
         let buffer_heap = Box::new(buffer.clone());
-        let message = Message::new(buffer_heap, 0, buffer.len(), false, MessageFlags::new_empty());
+        let message = Message::new(buffer_heap, 0, buffer.len(), false, MessageFlags::new_empty(), MessageType::Mvd);
 
-        return Ok(Mvd {
+        Ok(Mvd {
             size:buffer.len(),
             message,
             finished: false,
@@ -82,9 +83,9 @@ impl Mvd {
 #[cfg(feature = "ascii_strings")]
     pub fn new(buffer: Vec<u8>, maybe_ascii_converter: Option<AsciiConverter>) -> Result<Mvd, std::io::Error> {
         let buffer_heap = Box::new(buffer.clone());
-        let message = Message::new(buffer_heap, 0, buffer.len(), false, MessageFlags::new_empty(), maybe_ascii_converter);
+        let message = Message::new(buffer_heap, 0, buffer.len(), false, MessageFlags::new_empty(), maybe_ascii_converter, MessageType::Mvd);
 
-        return Ok(Mvd {
+        Ok(Mvd {
             size:buffer.len(),
             message: message.clone(),
             finished: false,
@@ -150,7 +151,7 @@ impl Mvd {
         while  loop_read_packet {
             loop_read_packet = self.read_packet(&mut frame)?;
         }
-        return Ok(frame)
+        Ok(frame)
     }
 
     pub fn read_packet(&mut self, frame: &mut Box<MvdFrame>) -> Result<bool, MvdParseError> {
@@ -160,9 +161,9 @@ impl Mvd {
         }
 
 #[cfg(feature = "ascii_strings")]
-        let mut message = Message::new(self.message.buffer.clone(), self.message.position, size as usize, false, self.message.flags, Some(self.message.ascii_converter.clone()));
+        let mut message = Message::new(self.message.buffer.clone(), self.message.position, size as usize, false, self.message.flags, Some(self.message.ascii_converter.clone()), MessageType::Mvd);
 #[cfg(not(feature = "ascii_strings"))]
-        let mut message = Message::new(self.message.buffer.clone(), self.message.position, size as usize, false, self.message.flags);
+        let mut message = Message::new(self.message.buffer.clone(), self.message.position, size as usize, false, self.message.flags, MessageType::Mvd);
         self.message.position += size as usize;
         if self.last.command == DemoCommand::Multiple && self.last.to == 0 {
             return Ok(false)
@@ -175,19 +176,19 @@ impl Mvd {
             if msg_cmd == 69 {
                 let s = message.read_stringbyte(true)?;
 #[cfg(feature = "ascii_strings")]
-                if s.string == "ndOfDemo".to_string() {
+                if s.string == *"ndOfDemo" {
                     self.finished =  true;
-                    return Ok(false)
+                    return Ok(false);
                 }
                 #[cfg(not(feature = "ascii_strings"))]
-                if String::from_utf8_lossy(&s) == "ndOfDemo".to_string() {
+                if String::from_utf8_lossy(&s.bytes) == *"ndOfDemo" {
                     self.finished =  true;
-                    return Ok(false)
+                    return Ok(false);
                 }
             }
             let cmd = match ServerClient::try_from(msg_cmd) {
                 Ok(cmd) => cmd,
-                Err(_) => return Err(MvdParseError::UnhandledCommand(msg_cmd))
+                Err(_) => return Err(MvdParseError::UnhandledCommand(msg_cmd)),
             };
 
             let ret = cmd.read_message(&mut message)?;
@@ -195,7 +196,6 @@ impl Mvd {
             match ret {
                 ServerMessage::Serverdata(r) => {
                     frame.messages.push(ServerMessage::Serverdata(r.clone()));
-                    //frame.messages.push(r.clone());
                     self.message.flags.fte_protocol_extensions = r.fte_protocol_extension;
                     self.message.flags.fte_protocol_extensions_2 = r.fte_protocol_extension_2;
                     message.flags = self.message.flags;
@@ -210,6 +210,6 @@ impl Mvd {
             }
         }
 
-        return Ok(false)
+        Ok(false)
     }
 }
