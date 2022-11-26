@@ -1,6 +1,5 @@
 use crate::protocol::message::errors::MessageError;
 use paste::paste;
-use protocol_macros::message_trace;
 use serde::Serialize;
 
 #[cfg(feature = "ascii_strings")]

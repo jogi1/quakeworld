@@ -9,7 +9,7 @@ use crate::protocol::message::*;
 use crate::protocol::message::errors::*;
 use crate::protocol::message::trace::*;
 
-use protocol_macros::{ParseMessage, message_trace};
+use protocol_macros::ParseMessage;
 
 #[cfg(feature = "ascii_strings")]
 use crate::utils::ascii_converter::AsciiConverter;
@@ -808,7 +808,6 @@ fn playerinfo_read_connection(message: &mut Message) -> Result<ServerMessage, Me
 }
 
 impl Playerinfo  {
-#[message_trace]
     pub fn read(message: &mut Message) -> Result<ServerMessage, MessageError> {
         if message.r#type == MessageType::Connection {
             playerinfo_read_connection(message)
