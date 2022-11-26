@@ -6,6 +6,9 @@ use quakeworld::mvd::Mvd;
 use quakeworld::state::State;
 use quakeworld::protocol::types::ServerMessage;
 
+#[cfg(feature = "trace")]
+use quakeworld::utils::trace::*;
+
 // the most basic implementation of a mvd parser
 fn parse_file(filename: String) -> Result<bool, Box<dyn Error>> {
     // read the file into a buffer
@@ -22,13 +25,27 @@ fn parse_file(filename: String) -> Result<bool, Box<dyn Error>> {
             return Err(Box::new(err))
         }
     };
+    let mut mvd = Mvd::new(*buffer,
 #[cfg(feature = "ascii_strings")]
-    let mut mvd = Mvd::new(*buffer, None)?;
-#[cfg(not(feature = "ascii_strings"))]
-    let mut mvd = Mvd::new(*buffer)?;
+                           None,
+#[cfg(feature = "trace")]
+                           true,
+                           )?;
+
     let mut state = State::new();
     while mvd.finished == false {
-        let frame = mvd.parse_frame()?;
+        //let frame = mvd.parse_frame()?;
+        let frame = match  mvd.parse_frame() {
+            Ok(v) => {
+                v
+            },
+            Err(e) => {
+                #[cfg(feature = "trace")]
+                print_message_trace(&mvd.message, false, 0, 2)?;
+                return Err(Box::new(e));
+            },
+        };
+
         // frame count and demo time
         //println!("--- frame {}:{} ---", frame.frame, frame.time);
         // if you need to keep the last state
@@ -42,6 +59,10 @@ fn parse_file(filename: String) -> Result<bool, Box<dyn Error>> {
                 }
                 _ => {}
             }
+        }
+        #[cfg(feature = "trace")]
+        if false { // if you want to print a trace of each read frame
+            print_message_trace(&mvd.message, false, 0, 2)?;
         }
     }
     return Ok(true)

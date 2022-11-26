@@ -9,18 +9,7 @@ use crate::protocol::message::*;
 use crate::protocol::message::errors::*;
 use crate::protocol::message::trace::*;
 
-use protocol_macros::ParseMessage;
-
-macro_rules! function {
-    () => {{
-        fn f() {}
-        fn type_name_of<T>(_: T) -> &'static str {
-            std::any::type_name::<T>()
-        }
-        let name = type_name_of(f);
-        &name[..name.len() - 3]
-    }}
-}
+use protocol_macros::{ParseMessage, message_trace};
 
 #[cfg(feature = "ascii_strings")]
 use crate::utils::ascii_converter::AsciiConverter;
@@ -53,6 +42,8 @@ pub struct DeltaUserCommand {
 
 impl DeltaUserCommand {
     pub fn read(message: &mut Message) -> Result<DeltaUserCommand, MessageError> {
+        trace_start!(message, false);
+        trace_annotate!(message, "bits");
         let bits = message.read_u8(false)?;
         let flags = UserCommandFlags::from_bits_truncate(bits);
         let mut angle = AngleVectorOption::empty();
@@ -62,49 +53,64 @@ impl DeltaUserCommand {
 
         if message.flags.protocol <= 26 {
             if flags.contains(UserCommandFlags::ANGLE1) {
+                trace_annotate!(message, "angle1");
                 angle.x = Some(message.read_angle16(false)?);
             }
+
+            trace_annotate!(message, "angle2");
             angle.y = Some(message.read_angle16(false)?);
             if flags.contains(UserCommandFlags::ANGLE3) {
+                trace_annotate!(message, "angle3");
                 angle.z = Some(message.read_angle16(false)?);
             }
             if flags.contains(UserCommandFlags::FORWARD) {
+                trace_annotate!(message, "forward");
                 forward = Some((message.read_i8(false)? << 3) as i16);
             }
             if flags.contains(UserCommandFlags::SIDE) {
+                trace_annotate!(message, "side");
                 side = Some((message.read_i8(false)? << 3) as i16);
             }
             if flags.contains(UserCommandFlags::UP) {
+                trace_annotate!(message, "up");
                 up = Some((message.read_i8(false)? << 3) as i16);
             }
         } else {
             if flags.contains(UserCommandFlags::ANGLE1) {
+                trace_annotate!(message, "angle1");
                 angle.x = Some(message.read_angle16(false)?);
             }
             if flags.contains(UserCommandFlags::ANGLE2) {
+                trace_annotate!(message, "angle2");
                 angle.y = Some(message.read_angle16(false)?);
             }
             if flags.contains(UserCommandFlags::ANGLE3) {
+                trace_annotate!(message, "angle3");
                 angle.z = Some(message.read_angle16(false)?);
             }
             if flags.contains(UserCommandFlags::FORWARD) {
+                trace_annotate!(message, "forward");
                 forward = Some(message.read_i16(false)?);
             }
             if flags.contains(UserCommandFlags::SIDE) {
+                trace_annotate!(message, "side");
                 side = Some(message.read_i16(false)?);
             }
             if flags.contains(UserCommandFlags::UP) {
+                trace_annotate!(message, "up");
                 up = Some(message.read_i16(false)?);
             }
         }
 
         let mut buttons: Option<u8> = None;
         if flags.contains(UserCommandFlags::BUTTONS) {
+            trace_annotate!(message, "buttons");
             buttons = Some(message.read_u8(false)?);
         }
 
         let mut impulse: Option<u8> = None;
         if flags.contains(UserCommandFlags::IMPULSE) {
+            trace_annotate!(message, "impulse");
             impulse = Some(message.read_u8(false)?);
         }
 
@@ -112,13 +118,14 @@ impl DeltaUserCommand {
         if message.flags.protocol <= 26 {
             // ANGLE2 here is CM_MSEC in the original
             if flags.contains(UserCommandFlags::ANGLE2) {
+                trace_annotate!(message, "angle2");
                 msec = Some(message.read_u8(false)?);
             }
         } else {
+                trace_annotate!(message, "msec");
                 msec = Some(message.read_u8(false)?);
         }
-
-        Ok(DeltaUserCommand{
+        let r = DeltaUserCommand{
             bits: flags,
             angle,
             forward,
@@ -127,7 +134,10 @@ impl DeltaUserCommand {
             buttons,
             impulse,
             msec
-        })
+        };
+
+        trace_stop!(message, r);
+        Ok(r)
     }
 }
 
@@ -375,7 +385,10 @@ impl Serverdata {
         let mut fte_protocol_extension = FteProtocolExtensions::empty();
         let mut fte_protocol_extension_2 = FteProtocolExtensions2::empty();
         let mut mvd_protocol_extension = MvdProtocolExtensions::empty();
+
+        trace_start!(message, false);
         loop {
+            trace_annotate!(message, "protocol");
             let p = message.read_u32(false)?;
             protocol = ProtocolVersion::try_from(p)?;
 
@@ -385,45 +398,53 @@ impl Serverdata {
                 },
                 ProtocolVersion::Standard => break,
                 ProtocolVersion::Mvd1 => {
+                    trace_annotate!(message, "mvd1");
                     let u = message.read_u32(false)?;
                     mvd_protocol_extension = MvdProtocolExtensions::from_bits_truncate(u);
                     continue;
                 },
                 ProtocolVersion::Fte  => {
+                    trace_annotate!(message, "fte");
                     let u = message.read_u32(false)?;
                     fte_protocol_extension = FteProtocolExtensions::from_bits_truncate(u);
                     continue;
                 },
                 ProtocolVersion::Fte2  => {
+                    trace_annotate!(message, "fte2");
                     let u = message.read_u32(false)?;
                     fte_protocol_extension_2 = FteProtocolExtensions2::from_bits_truncate(u);
                     continue;
                 },
             }
         }
+        trace_annotate!(message, "servercount");
         let servercount = message.read_u32(false)?;
+        trace_annotate!(message, "gamedir");
         let gamedir = message.read_stringbyte(false)?;
         let mut demotime: f32 = 0.0;
         let mut player_number: u8 = 0;
         match message.r#type {
             MessageType::Connection => {
+                trace_annotate!(message, "player_number");
                 player_number = message.read_u8(false)?;
             },
             MessageType::Mvd => {
+                trace_annotate!(message, "demotime");
                 demotime = message.read_f32(false)?;
             },
             _ => {
                 return Err(MessageError::StringError("MessageType None should never happen, probable parser error".to_string()))
             }
         }
+        trace_annotate!(message, "map");
         let map = message.read_stringbyte(false)?;
         let mut movevars:  [f32;10] = [0.0; 10];
         for mv in &mut movevars {
+            trace_annotate!(message, "movevar");
             *mv = message.read_f32(false)?;
         }
 
-        Ok(
-            ServerMessage::Serverdata(
+        let r = ServerMessage::Serverdata(
                 Serverdata {
                     protocol,
                     fte_protocol_extension,
@@ -435,8 +456,9 @@ impl Serverdata {
                     player_number,
                     map,
                     movevars
-                })
-            )
+                });
+        trace_stop!(message, r);
+        Ok(r)
     }
 }
 
@@ -786,6 +808,7 @@ fn playerinfo_read_connection(message: &mut Message) -> Result<ServerMessage, Me
 }
 
 impl Playerinfo  {
+#[message_trace]
     pub fn read(message: &mut Message) -> Result<ServerMessage, MessageError> {
         if message.r#type == MessageType::Connection {
             playerinfo_read_connection(message)
@@ -871,10 +894,12 @@ pub struct Packetentities {
 
 impl Packetentities  {
     pub fn read(message: &mut Message) -> Result<ServerMessage, MessageError> {
+        trace_start!(message, false);
         let mut entities = Vec::new();
         let mut i = 0;
         loop {
             i += 1;
+            trace_annotate!(message, "bits");
             let mut bits = message.read_u16(false)?;
             if bits == 0 {
                 break
@@ -883,6 +908,7 @@ impl Packetentities  {
             bits &= !511;
             let mut flags = UpdateTypes::from_bits_truncate(bits);
             if flags.contains(UpdateTypes::MOREBITS) {
+                trace_annotate!(message, "morebits");
                 let morebits = message.read_u8(false)?;
                 bits |= morebits as u16;
                 flags = UpdateTypes::from_bits_truncate(bits);
@@ -895,30 +921,35 @@ impl Packetentities  {
 
             let mut model = None;
             if flags.contains(UpdateTypes::MODEL) {
+                trace_annotate!(message, "model");
                 let tmp = message.read_u8(false)? as u16;
                 model = Some(tmp);
             }
 
             let mut frame = None;
             if flags.contains(UpdateTypes::FRAME) {
+                trace_annotate!(message, "frame");
                 let tmp = message.read_u8(false)?;
                 frame = Some(tmp);
             }
 
             let mut colormap = None;
             if flags.contains(UpdateTypes::COLORMAP) {
+                trace_annotate!(message, "colormap");
                 let tmp = message.read_u8(false)?;
                 colormap = Some(tmp);
             }
 
             let mut skin = None;
             if flags.contains(UpdateTypes::SKIN) {
+                trace_annotate!(message, "skin");
                 let tmp = message.read_u8(false)?;
                 skin = Some(tmp);
             }
 
             let mut effects = None;
             if flags.contains(UpdateTypes::EFFECTS) {
+                trace_annotate!(message, "effects");
                 let tmp = message.read_u8(false)?;
                 effects = Some(tmp);
             }
@@ -930,31 +961,37 @@ impl Packetentities  {
             let mut angle_internal = AngleVectorOption::empty();
 
             if flags.contains(UpdateTypes::ORIGIN1) {
+                trace_annotate!(message, "origin.x");
                 let tmp = message.read_coordinate(false)?;
                 origin_internal.x = Some(tmp);
             }
 
             if flags.contains(UpdateTypes::ANGLE1) {
+                trace_annotate!(message, "angle.x");
                 let tmp = message.read_angle(false)?;
                 angle_internal.x = Some(tmp);
             }
 
             if flags.contains(UpdateTypes::ORIGIN2) {
+                trace_annotate!(message, "origin.y");
                 let tmp = message.read_coordinate(false)?;
                 origin_internal.y = Some(tmp);
             }
 
             if flags.contains(UpdateTypes::ANGLE2) {
+                trace_annotate!(message, "angle.y");
                 let tmp = message.read_angle(false)?;
                 angle_internal.y = Some(tmp);
             }
 
             if flags.contains(UpdateTypes::ORIGIN3) {
+                trace_annotate!(message, "origin.z");
                 let tmp = message.read_coordinate(false)?;
                 origin_internal.z = Some(tmp);
             }
 
             if flags.contains(UpdateTypes::ANGLE3) {
+                trace_annotate!(message, "angle.z");
                 let tmp = message.read_angle(false)?;
                 angle_internal.z = Some(tmp);
             }
@@ -982,13 +1019,14 @@ impl Packetentities  {
                 ..Default::default()
             };
             entities.push(p);
+            // TODO: wha?
             if i == 65 {
                 panic!();
             }
         }
-        Ok(ServerMessage::Packetentities(Packetentities{
-            entities
-        }))
+        let r = ServerMessage::Packetentities(Packetentities{ entities });
+        trace_stop!(message, r);
+        Ok(r)
     }
 }
 
@@ -1529,37 +1567,47 @@ pub struct Sound {
 
 impl Sound {
     pub fn read(message: &mut Message) -> Result<ServerMessage, MessageError> {
+        trace_start!(message, false);
+        trace_annotate!(message, "channel");
         let channel = message.read_u16(false)?;
         let mut volume = None;
         let mut attenuation = None;
         let mut origin = CoordinateVector{..Default::default()};
 
         if channel & 1 << 15 == 1 << 15 {
+            trace_annotate!(message, "volume");
             let b = message.read_u8(false)?;
             volume  = Some(b);
         }
 
         if channel & 1 << 14 == 1 << 14 {
+            trace_annotate!(message, "channel");
             let b = message.read_u8(false)?;
             attenuation = Some(b);
         }
 
         let entity  = (channel >> 3) & 1023;
 
+        trace_annotate!(message, "index");
         let index = message.read_u8(false)?;
 
+        trace_annotate!(message, "origin.x");
         origin.x = message.read_coordinate(false)?;
+        trace_annotate!(message, "origin.y");
         origin.y = message.read_coordinate(false)?;
+        trace_annotate!(message, "origin.x");
         origin.z = message.read_coordinate(false)?;
 
-        Ok(ServerMessage::Sound(Sound{
+        let r = ServerMessage::Sound(Sound{
             channel,
             entity,
             index,
             volume,
             attenuation,
             origin
-        }))
+        });
+        trace_stop!(message, r);
+        Ok(r)
     }
 }
 
@@ -1642,11 +1690,14 @@ pub struct Tempentity {
 
 impl Tempentity {
     pub fn read(message: &mut Message) -> Result<ServerMessage, MessageError> {
+        trace_start!(message, false);
+        trace_annotate!(message, "entity type");
         let t = message.read_u8(false)?;
         let r#type = TempEntityType::try_from(t)?;
 
         let mut count = 0_i8;
         if r#type == TempEntityType::Gunshot || r#type == TempEntityType::Blood {
+            trace_annotate!(message, "count");
             count = message.read_i8(false)?;
         }
 
@@ -1656,24 +1707,32 @@ impl Tempentity {
             || r#type == TempEntityType::Lightning2 
                 || r#type == TempEntityType::Lightning3
                 {
+                    trace_annotate!(message, "entity");
                     entity = message.read_u16(false)?;
+                    trace_annotate!(message, "start.x");
                     start.x = message.read_coordinate(false)?;
+                    trace_annotate!(message, "start.y");
                     start.y = message.read_coordinate(false)?;
+                    trace_annotate!(message, "start.z");
                     start.z = message.read_coordinate(false)?;
                 }
 
         let mut origin =  CoordinateVector{..Default::default()};
+        trace_annotate!(message, "origin.x");
         origin.x = message.read_coordinate(false)?;
+        trace_annotate!(message, "origin.y");
         origin.y = message.read_coordinate(false)?;
+        trace_annotate!(message, "origin.z");
         origin.z = message.read_coordinate(false)?;
-
-        Ok(ServerMessage::Tempentity(Tempentity{
+        let r = ServerMessage::Tempentity(Tempentity{
             r#type,
             origin,
             start,
             entity,
             count,
-        }))
+        });
+        trace_stop!(message, r);
+        Ok(r)
     }
 }
 

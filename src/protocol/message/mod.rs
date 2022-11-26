@@ -1,12 +1,13 @@
 use crate::protocol::message::errors::MessageError;
 use paste::paste;
+use protocol_macros::message_trace;
 use serde::Serialize;
 
 #[cfg(feature = "ascii_strings")]
 use crate::utils::ascii_converter::AsciiConverter;
 
 use crate::protocol::types::*;
-use crate::protocol::message::trace::{trace_start, trace_stop, trace_annotate, MessageTrace, TraceValue, ToTraceValue};
+use crate::protocol::message::trace::{trace_start, trace_stop, trace_annotate, trace_lock, trace_unlock, MessageTrace, TraceValue, ToTraceValue};
 
 pub mod errors;
 pub mod trace;
@@ -49,7 +50,7 @@ impl MessageFlags {
     }
 }
 
-#[derive(Serialize, Clone, Default)]
+#[derive(Serialize, Clone, Default, Debug)]
 pub struct Message
 {
     pub start: usize, // starting position in the buffer
@@ -289,6 +290,7 @@ impl Message {
         let mut buf : Vec<u8> =  Vec::new();
         let original_position = self.position;
         buf.clear();
+        trace_lock!(self);
         loop {
             let b = self.read_u8(false)?;
             if b == 255 {
@@ -299,6 +301,7 @@ impl Message {
 
             buf.push(b);
         }
+        trace_unlock!(self);
 
         if readahead {
             self.position = original_position;
@@ -315,6 +318,7 @@ impl Message {
     }
 
     pub fn read_stringvector (&mut self, readahead: bool) ->  Result<Vec<StringByte>, MessageError> {
+        trace_start!(self, readahead);
         let mut strings =  Vec::new();
         strings.clear();
         loop {
@@ -325,43 +329,58 @@ impl Message {
             strings.push(s);
         }
 
+        trace_stop!(self, strings);
         Ok(strings)
     }
 
     pub fn read_coordinate(&mut self, readahead: bool) ->  Result<Coordinate, MessageError> {
+        trace_start!(self, readahead);
         if self.flags.fte_protocol_extensions.contains(FteProtocolExtensions::FLOATCOORDS) {
+
             let f = self.read_f32(readahead)?;
+            trace_stop!(self);
             return Ok(f);
         }
         let s = self.read_i16(readahead)? as f32;
+        trace_stop!(self);
         Ok(s * (1.0/8.0))
     }
 
     pub fn read_coordinatevector(&mut self, readahead: bool) ->  Result<CoordinateVector, MessageError> {
+        trace_start!(self, readahead);
         let x = self.read_coordinate(readahead)?;
         let y = self.read_coordinate(readahead)?;
         let z = self.read_coordinate(readahead)?;
+        trace_stop!(self);
         Ok(CoordinateVector{x, y, z})
     }
 
     pub fn read_angle(&mut self, readahead: bool) ->  Result<Angle, MessageError> {
+        trace_start!(self, readahead);
         if self.flags.fte_protocol_extensions.contains(FteProtocolExtensions::FLOATCOORDS) {
             let f = self.read_angle16(readahead)?;
+            trace_stop!(self);
             return Ok(f);
         }
         let s = self.read_u8(readahead)? as f32;
+        trace_stop!(self);
         Ok(s * (360.0/256.0))
     }
 
     pub fn read_angle16(&mut self, readahead: bool) ->  Result<Angle, MessageError> {
+        trace_start!(self, readahead);
         let s = self.read_u16(readahead)? as f32;
-        Ok(s * (360.0/65535.0))
+        let v = s * (360.0/65535.0);
+        trace_stop!(self, v);
+        Ok(v)
     }
 
     pub fn read_anglevector(&mut self, readahead: bool) ->  Result<AngleVector, MessageError> {
+        trace_start!(self, readahead);
         let x = self.read_angle(readahead)?;
         let y = self.read_angle(readahead)?;
         let z = self.read_angle(readahead)?;
+        trace_stop!(self);
         Ok(AngleVector{x, y, z})
     }
 
@@ -465,21 +484,16 @@ impl Message {
     }
 
     pub fn read_connected_packet(&mut self) -> Result<Packet, MessageError> {
-        #[cfg(feature = "trace")]
-        self.read_trace_start(function!(), false);
-
-        #[cfg(feature = "trace")]
-        self.read_trace_annotate("sequence");
+        trace_start!(self, false);
+        trace_annotate!(self, "sequence");
         let sequence = self.read_u32(false)?;
-        #[cfg(feature = "trace")]
-        self.read_trace_annotate("sequence_ack");
+        trace_annotate!(self, "sequence_ack");
         let sequence_ack = self.read_u32(false)?;
         let mut messages = Vec::new();
 
         loop {
 
-            #[cfg(feature = "trace")]
-            self.read_trace_annotate("message type");
+            trace_annotate!(self, "message type");
             let t = match self.read_u8(false) {
                 Ok(t) => t,
                 Err(e) => {
@@ -494,15 +508,12 @@ impl Message {
                 Ok(cmd) => cmd,
                 Err(_) => {
 
-                    #[cfg(feature = "trace")]
-                    {
-                        let p = Packet::Connected(Connected{
-                            sequence,
-                            sequence_ack,
-                            messages,
-                        });
-                        self.read_trace_stop(TraceValue::Packet(p));
-                    }
+                    let p = Packet::Connected(Connected{
+                        sequence,
+                        sequence_ack,
+                        messages,
+                    });
+                    trace_stop!(self, p);
                     return Err(MessageError::UnknownType(t));
                 }
             };
@@ -515,19 +526,22 @@ impl Message {
             messages,
         });
 
-        #[cfg(feature = "trace")]
-        self.read_trace_stop(TraceValue::Packet(p.clone()));
+        trace_stop!(self, p);
         Ok(p)
     }
 
     pub fn read_oob_packet(&mut self) -> Result<Packet, MessageError> {
+        trace_start!(self, false);
+        trace_annotate!(self, "header");
         let _ = self.read_i32(false)?;
+        trace_annotate!(self, "type");
         let _packet_type = self.read_u8(false)?;
-        println!("{}", _packet_type);
         let packet_type = CommandCode::try_from(_packet_type)?;
+        trace_stop!(self, _packet_type, U8);
         match packet_type {
             CommandCode::S2cChallenge => {
-                self.read_packet_s2c_challenge()
+                let p = self.read_packet_s2c_challenge();
+                return p;
             }
             CommandCode::S2cConnection => {
                 Ok(Packet::ConnectionLessServerConnection)
@@ -537,6 +551,8 @@ impl Message {
 
     fn read_packet_s2c_challenge(&mut self) -> Result<Packet, MessageError> {
         let mut flags = MessageFlags::new_empty();
+        trace_start!(self, false);
+        trace_annotate!(self, "command string");
         let s = self.read_stringbyte(false)?;
 
         #[cfg(not(feature = "ascii_strings"))]
@@ -549,37 +565,38 @@ impl Message {
         let ss = s.string;
 
         let challenge = ss.parse::<i32>().unwrap();
+        trace_annotate!(self, "protocol");
         while let Ok(prot_r) = self.read_u32(false) {
-        /*
-        loop {
-            let prot_r = match self.read_u32(false) {
-                Ok(v) => v,
-                Err(_) => {break;}
-            };
-            */
             let prot = ProtocolVersion::try_from(prot_r)?;
             match prot {
                 ProtocolVersion::Fte => {
+                    trace_annotate!(self, "Fte");
                     let i = self.read_u32(false)?;
                     flags.fte_protocol_extensions = FteProtocolExtensions::from_bits_truncate(i);
                 }
                 ProtocolVersion::Fte2 => {
+                    trace_annotate!(self, "Fte2");
                     let i = self.read_u32(false)?;
                     flags.fte_protocol_extensions_2 = FteProtocolExtensions2::from_bits_truncate(i);
                 }
                 ProtocolVersion::Mvd1 => {
+                    trace_annotate!(self, "Mvd1");
                     let i = self.read_u32(false)?;
                     flags.mvd_protocol_extension = MvdProtocolExtensions::from_bits_truncate(i);
                 }
                 _ => {
+                    trace_annotate!(self, "standard");
                     flags.protocol = self.read_u32(false)?;
                 }
             }
+            trace_annotate!(self, "protocol");
         };
-        Ok(Packet::ConnectionLessServerChallenge(ConnectionLessServerChallenge{
+        let r = Packet::ConnectionLessServerChallenge(ConnectionLessServerChallenge{
             protocol: flags,
             challenge,
-        }))
+        });
+        trace_stop!(self, r);
+        Ok(r)
     }
 
     pub fn replace_at_position(&mut self, bytes: impl Into<Vec<u8>>, position: usize) -> Result<(), MessageError> {

@@ -26,5 +26,5 @@ fn main() {
             },
             _ => { panic!("its not print!");},
         }
-        print_message_trace(&message);
+        print_message_trace(&message, false)?;
     }

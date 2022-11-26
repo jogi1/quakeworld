@@ -230,7 +230,7 @@ impl State {
                 player.update_userinfo();
             }
             ServerMessage::Playerinfo(_data) => {
-                panic!("FIXME");
+                //panic!("FIXME");
                 /*
                 if data.origin.is_some() {
                     data.origin.unwrap().apply_to(&mut player.origin);
@@ -332,7 +332,7 @@ impl State {
                     self.update_player(data.player_number as u16, message);
                 }
                 ServerMessage::Playerinfo(_data) => {
-                    panic!("FIXME");
+                    //panic!("FIXME");
                     /*
                     self.update_player(data.player_number as u16, message);
                     */
