@@ -1,3 +1,12 @@
+## [0.2.2](https://github.com/jogi1/quakeworld/compare/v0.2.1...v0.2.2) (2022-11-26)
+
+
+### Bug Fixes
+
+* attributes, tracing ([b041d83](https://github.com/jogi1/quakeworld/commit/b041d832880bb068caa162be9fd4468a99c7d5bd))
+
+
+
 ## [0.2.1](https://github.com/jogi1/quakeworld/compare/v0.2.0...v0.2.1) (2022-11-26)
 
 
@@ -31,15 +40,6 @@
 ### Bug Fixes
 
 * cargo setup ([4ff63b3](https://github.com/jogi1/quakeworld/commit/4ff63b389d279541f1370aa2ad2b8fa8f89d35d8))
-
-
-
-## [0.0.2](https://github.com/jogi1/quakeworld/compare/78853a459c78160b65bf8355293ddb1be219f39a...v0.0.2) (2022-11-11)
-
-
-### Bug Fixes
-
-* crate info, release workflow ([78853a4](https://github.com/jogi1/quakeworld/commit/78853a459c78160b65bf8355293ddb1be219f39a))
 
 
 
