@@ -1,5 +1,4 @@
 use serde::Serialize;
-use paste::paste;
 use crate::protocol::message::Message;
 use crate::protocol::message::MessageFlags;
 use crate::protocol::message::MessageType;
@@ -12,7 +11,7 @@ use crate::utils::ascii_converter::AsciiConverter;
 use crate::protocol::message::trace::*;
 
 
-#[derive(Serialize, Clone, PartialEq, Debug, PartialOrd)]
+#[derive(Serialize, Clone, PartialEq, Eq, Debug, PartialOrd)]
 pub struct MvdTarget {
     pub to: u32,
     pub command: DemoCommand,
@@ -224,7 +223,6 @@ impl Mvd {
                     frame.messages.push(ServerMessage::Serverdata(r.clone()));
                     self.message.flags.fte_protocol_extensions = r.fte_protocol_extension;
                     self.message.flags.fte_protocol_extensions_2 = r.fte_protocol_extension_2;
-                    self.message.flags = self.message.flags;
                 }
                 _ => {
                     frame.messages.push(ret);

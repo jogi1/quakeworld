@@ -57,7 +57,7 @@ fn fg_color_increase_mut(color_in: &mut u8) {
 fn bg_color_increase_mut(color_in: &mut u8)  {
     let min =  52;
     let max = 63;
-    let mut color = color_in.clone();
+    let mut color = *color_in;
     if color < min {
         color = min;
     } else {
@@ -69,26 +69,38 @@ fn bg_color_increase_mut(color_in: &mut u8)  {
     *color_in = color;
 }
 
-fn print_recursive(message: &Message, traces: &ReadTrace,full_message: bool, indent: u32, bg_color: u8, fg_color: u8, min_depth: u32, max_depth: u32) -> Result<(), Box<dyn Error>>  {
+#[derive(Clone, Debug)]
+struct RecursivePrintFlags {
+    full: bool, // print full message
+    indent: u32, // indentation level
+    min_depth: u32, // minimum level for printing
+    max_depth: u32, // maximum level for printing
+    fg_color: u8, // foreground color
+    bg_color: u8, // background color
+}
 
-    if indent >= max_depth {
+fn print_recursive(message: &Message, traces: &ReadTrace, flags: &mut RecursivePrintFlags) /* full_message: bool, indent: u32, bg_color: u8, fg_color: u8, min_depth: u32, max_depth: u32)*/ -> Result<(), Box<dyn Error>>  {
+
+    if flags.indent >= flags.max_depth {
         return Ok(());
     }
 
-    if indent >= min_depth {
+    if flags.indent >= flags.min_depth {
         for inner_trace in &traces.read {
-            if inner_trace.read.len() == 0 {
+            if inner_trace.read.is_empty() {
                 continue;
             }
-            print_recursive(message, &inner_trace, full_message, indent + 1, bg_color, fg_color, min_depth, max_depth)?;
+            let mut r_flags = flags.clone();
+            r_flags.indent += 1;
+            print_recursive(message, inner_trace, &mut r_flags)?;
         }
     }
 
     let mut stdout = StandardStream::stdout(ColorChoice::Always);
     let trace = traces;
-    let bg_color = bg_color_increase(bg_color);
-    let mut fg_color = fg_color_increase(fg_color);
-    let mut initial_color = fg_color;
+    let bg_color = bg_color_increase(flags.bg_color);
+    let mut fg_color = fg_color_increase(flags.fg_color);
+    let mut initial_color = flags.fg_color;
 
     let types: Vec<(usize, usize, u8)> = trace.read.clone().into_iter()
     .map(|read| {
@@ -102,7 +114,7 @@ fn print_recursive(message: &Message, traces: &ReadTrace,full_message: bool, ind
     color_spec.set_bg(Some(Color::Black));
     stdout.set_color(&color_spec)?;
 
-    let s = format!("{:width$}", "", width=indent as usize);
+    let s = format!("{:width$}", "", width=flags.indent as usize);
     if trace.annotation.is_some() {
         let m = trace.annotation.clone();
         println!("{}{} {} {} {}", s, trace.function, m.unwrap(), trace.start, trace.stop);
@@ -110,7 +122,7 @@ fn print_recursive(message: &Message, traces: &ReadTrace,full_message: bool, ind
         println!("{}{} {} {}", s, trace.function, trace.start, trace.stop);
     }
 
-    let indent = indent +1;
+    let indent = flags.indent +1;
 
     for trace in &traces.read {
         if trace.readahead {
@@ -131,7 +143,7 @@ fn print_recursive(message: &Message, traces: &ReadTrace,full_message: bool, ind
 
     let ascii_converter = AsciiConverter::new();
     let mut ascii_types: Vec<(u8, u8)> = vec![];
-    if types.len() > 0 {
+    if !types.is_empty() {
         let mut type_iter = types.iter();
         let mut current_type = type_iter.next().unwrap_or(&(0, 0, 0));
         let mut char_count = 0;
@@ -161,10 +173,11 @@ fn print_recursive(message: &Message, traces: &ReadTrace,full_message: bool, ind
 
             let (_, stop, _) = current_type;
             if stop <= &count {
-                let ct = type_iter.next();
-                if ct.is_some() {
-                    current_type = ct.unwrap();
-                }
+                current_type = if let Some(current_type) = type_iter.next() {
+                    current_type
+                } else {
+                    current_type
+                }; 
             }
             let (_, _, color) = current_type;
             color_spec.set_fg(Some(Color::Ansi256(*color)));
@@ -180,7 +193,7 @@ fn print_recursive(message: &Message, traces: &ReadTrace,full_message: bool, ind
                     write!(&mut stdout, "{}", *chr as char)?;
                 }
                 ascii_types.clear();
-                write!(&mut stdout, " \n")?;
+                writeln!(&mut stdout, " ")?;
                 char_count = 0;
             } else {
                 char_count +=1;
@@ -193,17 +206,29 @@ fn print_recursive(message: &Message, traces: &ReadTrace,full_message: bool, ind
     writeln!(&mut stdout)?;
 
     for inner_trace in &trace.read {
-        if inner_trace.read.len() == 0 {
+        if inner_trace.read.is_empty() {
             continue;
         }
-        print_recursive(message, &inner_trace, full_message, indent + 1, bg_color, fg_color, min_depth, max_depth)?;
+        let mut f = flags.clone();
+        f.indent += 1;
+        f.fg_color = fg_color;
+        f.bg_color = bg_color;
+        print_recursive(message, inner_trace, &mut f)?;
     }
-    return Ok(());
+    Ok(())
 }
 
 pub fn print_message_trace(message: &Message, full_message: bool, min_depth: u32, max_depth: u32) -> Result<(), Box<dyn Error>>  {
+    let flags = RecursivePrintFlags {
+        full: full_message,
+        indent: 0, 
+        min_depth,
+        max_depth,
+        fg_color: 0,
+        bg_color: 0
+    };
     for trace in &message.trace.read {
-        print_recursive(message, &trace, full_message, 0, 0, 0, min_depth, max_depth)?;
+        print_recursive(message, trace, &mut flags.clone())?;
     }
     Ok(())
 }

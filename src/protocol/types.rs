@@ -1844,6 +1844,7 @@ macro_rules! initialize_message_type {
     ($($ty:ident), *) => {
         paste! {
             #[derive(Debug, PartialEq, PartialOrd, Display, Serialize, Clone)]
+            #[non_exhaustive]
             pub enum ServerMessage {
                 $(
                 [< $ty >]([< $ty >]),
