@@ -1,3 +1,12 @@
+# [0.2.0](https://github.com/jogi1/quakeworld/compare/v0.1.0...v0.2.0) (2022-11-26)
+
+
+### Features
+
+* tracing ([2ab1b84](https://github.com/jogi1/quakeworld/commit/2ab1b842a3f9cf1ddced89f41a48ae33c38b59f3))
+
+
+
 # [0.1.0](https://github.com/jogi1/quakeworld/compare/v0.0.3...v0.1.0) (2022-11-22)
 
 
