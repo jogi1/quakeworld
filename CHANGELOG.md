@@ -1,3 +1,12 @@
+## [0.2.1](https://github.com/jogi1/quakeworld/compare/v0.2.0...v0.2.1) (2022-11-26)
+
+
+### Bug Fixes
+
+* remove unused macro ([9d752e5](https://github.com/jogi1/quakeworld/commit/9d752e5b8c79c67809deb23e83475156fe7ee647))
+
+
+
 # [0.2.0](https://github.com/jogi1/quakeworld/compare/v0.1.0...v0.2.0) (2022-11-26)
 
 
