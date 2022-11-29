@@ -1,3 +1,12 @@
+## [0.2.3](https://github.com/jogi1/quakeworld/compare/v0.2.2...v0.2.3) (2022-11-29)
+
+
+### Bug Fixes
+
+* trace abort and color handling ([48bc0d0](https://github.com/jogi1/quakeworld/commit/48bc0d0f355ee43f35dae4776a2560bfdab8077e))
+
+
+
 ## [0.2.2](https://github.com/jogi1/quakeworld/compare/v0.2.1...v0.2.2) (2022-11-26)
 
 
@@ -31,15 +40,6 @@
 ### Features
 
 * network/client ([fe9a7d5](https://github.com/jogi1/quakeworld/commit/fe9a7d5d6175e0eb9d33d920d1ca293c5f0fd0d5))
-
-
-
-## [0.0.3](https://github.com/jogi1/quakeworld/compare/v0.0.2...v0.0.3) (2022-11-12)
-
-
-### Bug Fixes
-
-* cargo setup ([4ff63b3](https://github.com/jogi1/quakeworld/commit/4ff63b389d279541f1370aa2ad2b8fa8f89d35d8))
 
 
 
