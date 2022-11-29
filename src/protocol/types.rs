@@ -1652,12 +1652,9 @@ pub struct Intermission {
     pub angle: AngleVector,
 }
 
-
 #[derive(Debug, PartialEq, Eq, PartialOrd, ParseMessage, Serialize, Clone)]
 pub struct Disconnect {
 }
-
-
 
 #[derive(Debug, Eq, PartialEq, PartialOrd, Ord, TryFromPrimitive, Display, Serialize, Clone)]
 #[repr(u8)]

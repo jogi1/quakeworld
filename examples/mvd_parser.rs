@@ -41,7 +41,7 @@ fn parse_file(filename: String) -> Result<bool, Box<dyn Error>> {
             },
             Err(e) => {
                 #[cfg(feature = "trace")]
-                print_message_trace(&mvd.message, false, 0, 2)?;
+                print_message_trace(&mvd.message, false, 0, 2, false)?;
                 return Err(Box::new(e));
             },
         };
@@ -62,7 +62,7 @@ fn parse_file(filename: String) -> Result<bool, Box<dyn Error>> {
         }
         #[cfg(feature = "trace")]
         if false { // if you want to print a trace of each read frame
-            print_message_trace(&mvd.message, false, 0, 2)?;
+            print_message_trace(&mvd.message, false, 0, 2, false)?;
         }
     }
     return Ok(true)

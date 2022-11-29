@@ -1,5 +1,5 @@
 use quakeworld::protocol::message::{Message, MessageFlags, MessageType};
-use quakeworld::protocol::types::{ServerClient, Print, ServerMessage};
+use quakeworld::protocol::types::{ServerClient, ServerMessage};
 use quakeworld::utils::trace::print_message_trace;
 fn main() {
         let b: Vec<u8> = vec![8, 2, 0x68, 0x65, 0x6c, 0x6c, 0x6f,0x0];
@@ -26,5 +26,5 @@ fn main() {
             },
             _ => { panic!("its not print!");},
         }
-        print_message_trace(&message, false)?;
+        let _ = print_message_trace(&message, true, 0, 9, true);
     }

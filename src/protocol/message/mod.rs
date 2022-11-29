@@ -6,7 +6,7 @@ use serde::Serialize;
 use crate::utils::ascii_converter::AsciiConverter;
 
 use crate::protocol::types::*;
-use crate::protocol::message::trace::{trace_start, trace_stop, trace_annotate, trace_lock, trace_unlock, MessageTrace, TraceValue, ToTraceValue};
+use crate::protocol::message::trace::{trace_start, trace_stop, trace_annotate, trace_abort, trace_lock, trace_unlock, MessageTrace, TraceValue, ToTraceValue};
 
 pub mod errors;
 pub mod trace;
@@ -72,7 +72,13 @@ macro_rules! endian_read {
                 pub fn [< read_$ty >] (&mut self, readahead: bool) ->  Result<$ty, MessageError> {
                     const TYPE_SIZE:usize = std::mem::size_of::<$ty>();
                     trace_start!(self, readahead);
-                    self.check_read_size(TYPE_SIZE)?;
+                    match self.check_read_size(TYPE_SIZE) {
+                        Ok(()) => {},
+                        Err(e) => {
+                            trace_abort!(self);
+                            return Err(e);
+                        },
+                    }
                     let mut a: [u8; TYPE_SIZE] = [0; TYPE_SIZE];
                     for n in 0..TYPE_SIZE {
                         a[n] = self.buffer[self.start + self.position + n ];
@@ -297,7 +303,6 @@ impl Message {
             } else if b == 0 {
                 break
             }
-
             buf.push(b);
         }
         trace_unlock!(self);
@@ -497,8 +502,18 @@ impl Message {
                 Ok(t) => t,
                 Err(e) => {
                     match e {
-                        MessageError::ReadBeyondSize(_,_,_) => break,
-                        _ => return Err(e),
+                        MessageError::ReadBeyondSize(_,_,_) => {
+                            break
+                        },
+                        _ => {
+                            let p = Packet::Connected(Connected{
+                                sequence,
+                                sequence_ack,
+                                messages,
+                            });
+                            trace_stop!(self, p);
+                            return Err(e)
+                        },
                     }
                 },
             };
@@ -506,7 +521,6 @@ impl Message {
             let cmd = match ServerClient::try_from(t) {
                 Ok(cmd) => cmd,
                 Err(_) => {
-
                     let p = Packet::Connected(Connected{
                         sequence,
                         sequence_ack,
@@ -516,7 +530,19 @@ impl Message {
                     return Err(MessageError::UnknownType(t));
                 }
             };
-            let ret = cmd.read_message(self)?;
+
+            let ret = match cmd.read_message(self) {
+                Ok(ret) => ret,
+                Err(e) => {
+                    let p = Packet::Connected(Connected{
+                        sequence,
+                        sequence_ack,
+                        messages,
+                    });
+                    trace_stop!(self, p);
+                    return Err(e);
+                }
+            };
             messages.push(ret);
         }
         let p = Packet::Connected(Connected{
@@ -539,8 +565,7 @@ impl Message {
         trace_stop!(self, _packet_type, U8);
         match packet_type {
             CommandCode::S2cChallenge => {
-                let p = self.read_packet_s2c_challenge();
-                return p;
+                self.read_packet_s2c_challenge()
             }
             CommandCode::S2cConnection => {
                 Ok(Packet::ConnectionLessServerConnection)

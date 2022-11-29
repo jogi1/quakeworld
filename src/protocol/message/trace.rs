@@ -12,6 +12,7 @@ pub struct ReadTrace {
     pub start: usize,
     pub stop: usize,
     pub readahead: bool,
+    pub aborted: bool,
     pub function: String,
     pub annotation: Option<String>,
     pub read: Vec<ReadTrace>,
@@ -90,8 +91,27 @@ impl Message {
             read: vec![],
             value: TraceValue::None,
             annotation,
+            aborted: false,
         };
         self.trace.stack.push(res)
+    }
+
+    #[cfg(feature = "trace")]
+    pub fn read_trace_abort(&mut self) {
+        if !self.trace.enabled {
+            return;
+        }
+        if let Some(mut trace) = self.trace.stack.pop() {
+            trace.aborted = true;
+            trace.stop = self.position;
+
+            let len = self.trace.stack.len();
+            if len > 0 {
+                self.trace.stack[len-1].read.push(trace);
+            } else {
+                self.trace.read.push(trace);
+            }
+        }
     }
 
     #[cfg(feature = "trace")]
@@ -158,6 +178,21 @@ macro_rules! trace_stop{
     }
 }
 pub(crate) use trace_stop;
+
+#[cfg(not(feature = "trace"))]
+macro_rules! trace_abort {
+}
+
+#[cfg(feature = "trace")]
+macro_rules! trace_abort {
+    ($self:expr) => {
+        if $self.trace.enabled && !$self.trace.locked {
+            $self.read_trace_abort();
+        }
+    }
+}
+
+pub(crate) use trace_abort;
 
 #[cfg(not(feature = "trace"))]
 macro_rules! trace_annotate {
