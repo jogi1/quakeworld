@@ -51,7 +51,7 @@ fn connect(local_ip: String, remote_ip: String) -> Result<bool, Box<dyn Error>> 
         // handle a timeout
         if server_packet.is_empty() {
             let status  = client.handle_timeout()?;
-            if let Some(mut response) = status.response {
+            if let Some(response) = status.response {
                 let r = socket.send_to(&response, &remote_ip)?;
                 assert_eq!(r, response.len());
             }

@@ -197,7 +197,7 @@ impl State {
 
     fn update_player(&mut self, player_index: u16, message: &ServerMessage) {
         let p = self.players.get_mut(&player_index);
-        let mut player = match p {
+        let player = match p {
             Some(player) =>  player,
             None => { self.players.insert(player_index, Player{..Default::default()});
                 self.players.get_mut(&player_index).unwrap()
