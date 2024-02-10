@@ -1,3 +1,13 @@
+## [0.2.6](https://github.com/jogi1/quakeworld/compare/v0.2.5...v0.2.6) (2024-02-10)
+
+
+### Bug Fixes
+
+* message_parsing test ([300977e](https://github.com/jogi1/quakeworld/commit/300977e5b76570494c9b7052391ca7ac5360a9e3))
+* more cleanup ([7869073](https://github.com/jogi1/quakeworld/commit/78690734100639215135638e81af6f4b810e553c))
+
+
+
 ## [0.2.5](https://github.com/jogi1/quakeworld/compare/v0.2.3...v0.2.5) (2024-02-10)
 
 
@@ -31,15 +41,6 @@
 ### Bug Fixes
 
 * remove unused macro ([9d752e5](https://github.com/jogi1/quakeworld/commit/9d752e5b8c79c67809deb23e83475156fe7ee647))
-
-
-
-# [0.2.0](https://github.com/jogi1/quakeworld/compare/v0.1.0...v0.2.0) (2022-11-26)
-
-
-### Features
-
-* tracing ([2ab1b84](https://github.com/jogi1/quakeworld/commit/2ab1b842a3f9cf1ddced89f41a48ae33c38b59f3))
 
 
 
