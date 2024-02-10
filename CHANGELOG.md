@@ -1,3 +1,12 @@
+## [0.2.5](https://github.com/jogi1/quakeworld/compare/v0.2.3...v0.2.5) (2024-02-10)
+
+
+### Bug Fixes
+
+* general cleanup ([4a3e0d1](https://github.com/jogi1/quakeworld/commit/4a3e0d1af5061ea5f9bd8bddef1460424f60c62c))
+
+
+
 ## [0.2.3](https://github.com/jogi1/quakeworld/compare/v0.2.2...v0.2.3) (2022-11-29)
 
 
@@ -31,15 +40,6 @@
 ### Features
 
 * tracing ([2ab1b84](https://github.com/jogi1/quakeworld/commit/2ab1b842a3f9cf1ddced89f41a48ae33c38b59f3))
-
-
-
-# [0.1.0](https://github.com/jogi1/quakeworld/compare/v0.0.3...v0.1.0) (2022-11-22)
-
-
-### Features
-
-* network/client ([fe9a7d5](https://github.com/jogi1/quakeworld/commit/fe9a7d5d6175e0eb9d33d920d1ca293c5f0fd0d5))
 
 
 
