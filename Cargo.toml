@@ -1,6 +1,6 @@
 [package]
 name = "quakeworld"
-version = "0.2.3"
+version = "0.2.4"
 edition = "2021"
 authors = ["Jürgen Legler <jogihoogi@gmail.com>"]
 license = "MIT"
@@ -14,7 +14,7 @@ A collection of quakeworld related libraries.
 [lib]
 
 [features]
-default = ["mvd", "utils", "protocol", "state", "network", "trace", "connection", "crc" ]
+default = ["mvd", "utils", "protocol", "state", "network", "trace", "connection", "crc", "pak" ]
 connection = ["protocol", "state", "network", "crc", "ascii_strings"]
 state = ["protocol", "utils"]
 mvd = ["utils", "protocol"]
@@ -24,6 +24,7 @@ ascii_strings = ["utils"]
 network = []
 trace = []
 crc = []
+pak = []
 
 [dependencies]
 protocol-macros = { version="0.0.2", path = "./protocol-macros", package="quakeworld-protocol-macros", optional=true }

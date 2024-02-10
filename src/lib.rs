@@ -20,6 +20,9 @@ pub mod network;
 #[cfg(feature = "crc")]
 pub mod crc;
 
+#[cfg(feature = "pak")]
+pub mod pak;
+
 #[cfg(test)]
 mod tests {
     use crate::utils::ascii_converter::AsciiConverter;
