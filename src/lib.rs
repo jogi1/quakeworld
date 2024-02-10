@@ -35,7 +35,7 @@ mod tests {
     }
 
     use crate::protocol::message::{Message, MessageFlags, MessageType};
-    use crate::protocol::types::{ServerClient, Print};
+    use crate::protocol::types::ServerClient;
     #[test]
     fn message_parsing() {
         let b: Vec<u8> = vec![8, 2, 0x68, 0x65, 0x6c, 0x6c, 0x6f,0x0];
@@ -58,7 +58,6 @@ mod tests {
             crate::protocol::types::ServerMessage::Print(p) => {
                 assert_eq!(p.from, 2);
                 assert_eq!(p.message.string, "hello");
-                panic!("{:?}", message.trace.read);
             },
             _ => { panic!("its not print!");},
         }
