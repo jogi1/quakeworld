@@ -28,7 +28,7 @@ pub fn block(buffer: impl Into<Vec<u8>>, length: usize) -> u16 {
     let mut crc: u16 = 0xffff;
     let buffer = buffer.into();
     for b in buffer.iter().take(length) {
-        crc = (crc << 8) as u16 ^ cst[((crc >> 8) as u8 ^ b) as usize] as u16;
+        crc = (crc << 8) ^ cst[((crc >> 8) as u8 ^ b) as usize];
     }
     crc
 }

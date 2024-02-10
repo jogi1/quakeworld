@@ -2,14 +2,10 @@ use std::io::Cursor;
 use std::io::Read;
 use std::io::prelude::*;
 use std::io::SeekFrom;
-use std::num::TryFromIntError;
 
 use serde::Serialize;
 use thiserror::Error;
-use byteorder::{BigEndian, LittleEndian, ReadBytesExt};
-
-
-
+use byteorder::{LittleEndian, ReadBytesExt};
 
 #[derive(Error, Debug)]
 pub enum PakError {
@@ -25,6 +21,8 @@ pub enum PakError {
     IntConversionError(std::num::TryFromIntError),
     #[error("supplied file name is longer than {0} >= {1}")]
     NameLengthError(usize, usize),
+    #[error("write length mismatch expected: {0}, got: {1}")]
+    WriteLength(usize, usize),
 }
 
 impl From<std::io::Error> for PakError {
@@ -100,7 +98,7 @@ impl Pak {
                 size: cursor.read_u32::<LittleEndian>()?,
             });
         }
-        return Ok(Pak{
+        Ok(Pak{
             data,
             files
         })
@@ -113,7 +111,7 @@ impl Pak {
         let mut buf = vec![0; size];
         cursor.seek(SeekFrom::Start(file.position as u64))?;
         cursor.read_exact(&mut buf)?;
-        return Ok(buf)
+        Ok(buf)
     }
 }
 
@@ -128,11 +126,17 @@ struct PakWriterFile {
     data: Vec<u8>,
 }
 
+impl Default for PakWriter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PakWriter {
     pub fn new() -> PakWriter {
-        return PakWriter{
+        PakWriter{
             files: Vec::new(),
-        };
+        }
     }
 
     pub fn file_add(&mut self, name: Vec<u8>, mut data: impl Read) -> Result<(), PakError> {
@@ -146,30 +150,30 @@ impl PakWriter {
             name,
             data: file_data,
         });
-        return Ok(())
+        Ok(())
     }
 
     pub fn write_data(self) -> Result<Vec<u8>, PakError> {
         let mut buffer: Vec<u8> = Vec::new();
         let mut c = Cursor::new(&mut buffer);
-        c.write(&HEADER.to_le_bytes())?;
+        c.write_all(&HEADER.to_le_bytes())?;
         let dir_offset : u32 = 4 * 3;
-        c.write(&dir_offset.to_le_bytes())?;
+        c.write_all(&dir_offset.to_le_bytes())?;
         let dir_size: u32 = (self.files.len() * (MAX_NAME_LENGTH +1 + 8)) as u32 ;
-        c.write(&dir_size.to_le_bytes())?;
+        c.write_all(&dir_size.to_le_bytes())?;
         let mut file_position = dir_offset + dir_size;
         for file in &self.files {
             let mut name_buffer: [u8;NAME_LENGTH as usize] = [0;NAME_LENGTH as usize];
             name_buffer[..file.name.len()].copy_from_slice(&file.name);
-            c.write(&name_buffer)?;
-            c.write(&file_position.to_le_bytes())?;
-            c.write(&(file.data.len() as u32).to_le_bytes())?;
+            c.write_all(&name_buffer)?;
+            c.write_all(&file_position.to_le_bytes())?;
+            c.write_all(&(file.data.len() as u32).to_le_bytes())?;
             file_position += file.data.len() as u32;
         }
         for file in &self.files {
-            c.write(&file.data)?;
+            c.write_all(&file.data)?;
         }
-        return Ok(buffer)
+        Ok(buffer)
     }
 }
 

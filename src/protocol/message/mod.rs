@@ -393,7 +393,7 @@ impl Message {
             start: 0,
             length: 0,
             position: 0,
-            buffer: Box::new(vec![]),
+            buffer: Box::<Vec<u8>>::default(),
             bigendian: false,
             flags: MessageFlags::new_empty(),
             #[cfg(feature = "ascii_strings")]

@@ -903,7 +903,7 @@ impl Packetentities  {
             if bits == 0 {
                 break
             }
-            let baseline_index = (bits & 511) as u16;
+            let baseline_index = bits & 511;
             bits &= !511;
             let mut flags = UpdateTypes::from_bits_truncate(bits);
             if flags.contains(UpdateTypes::MOREBITS) {
@@ -1054,7 +1054,7 @@ impl FteSpawnbaseline2 {
             #[cfg(feature = "trace")]
             message.read_trace_annotate("bits");
             let mut bits = message.read_u16(false)?;
-            let mut baseline_index = (bits & 511) as u16;
+            let mut baseline_index = bits & 511;
             bits &= !511;
             let mut flags = UpdateTypes::from_bits_truncate(bits);
             if flags.contains(UpdateTypes::MOREBITS) {
@@ -1239,7 +1239,7 @@ impl SpawnstaticFte2  {
 
         trace_annotate!(message, "bits");
         let mut bits = message.read_u16(false)?;
-        let mut baseline_index = (bits & 511) as u16;
+        let mut baseline_index = bits & 511;
         bits &= !511;
         let mut flags = UpdateTypes::from_bits_truncate(bits);
         if flags.contains(UpdateTypes::MOREBITS) {
@@ -1413,7 +1413,7 @@ impl Deltapacketentities  {
             if bits == 0 {
                 break
             }
-            let baseline_index = (bits & 511) as u16;
+            let baseline_index = bits & 511;
             bits &= !511;
             let mut flags = UpdateTypes::from_bits_truncate(bits);
             if flags.contains(UpdateTypes::MOREBITS) {

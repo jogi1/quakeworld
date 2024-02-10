@@ -134,7 +134,7 @@ impl Entity {
             packet_entity.origin.unwrap().apply_to(&mut origin);
         }
         Entity {
-            index: packet_entity.entity_index as u16,
+            index: packet_entity.entity_index,
             frame: packet_entity.frame.unwrap_or(0),
             model: packet_entity.model.unwrap_or(0),
             colormap: packet_entity.colormap.unwrap_or(0),
