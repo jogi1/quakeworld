@@ -24,9 +24,12 @@ A rust library for working with quakeworld.
  * crc
    * [quakeworld::crc](./src/crc/mod.rs) - checksum functions 
 
+ * pak
+   * [quakeworld::pak](./src/pak/mod.rs) - pak rading/writing
+
  * ascii_strings - when reading strings they will be converted to printable ascii, original bytes are also being kept see [here](./src/protocol/types.rs#L12)
 
-Features that are enabled by default are protocol, mvd, and util.  
+Features that are enabled by default are "mvd", "utils", "protocol", "state", "network", "trace", "connection", "crc" and "pak"
 Everything is serializable via [serde](https://github.com/serde-rs/serde) (json,...). Supports wasm as target ('it compiles' ```cargo build --target wasm32-unknown-unknown```) 
 
 ### Goals 
@@ -40,5 +43,7 @@ could be better, aka non existing at the moment
 ### Example
   * [minimal mvd parser](./examples/mvd_parser.rs)
   * [minimal client](./examples/client.rs)
+  * [minimal pak parser](./examples/pak.rs)
+  * [trace feature example](./examples/trace.rs)
   * [quakeworld swiss army knife](https://github.com/jogi1/qwsak)
   * [more elaborate mvd parser](https://github.com/jogi1/statyr) soon™
