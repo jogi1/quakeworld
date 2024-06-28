@@ -100,7 +100,6 @@ macro_rules! function {
         &name[..name.len() - 3]
     }};
 }
-#[allow(unused)]
 pub(crate) use function;
 
 #[cfg(not(feature = "trace"))]
@@ -139,7 +138,7 @@ macro_rules! trace_stop {
     ( $dr:ident, $value:expr, $valueType:ident) => {
         paste! {
         if let Some(trace) = &mut $dr.trace {
-        trace.stop($dr.cursor.position(), $value.to_datatype());
+        trace.stop($dr.cursor.position(), $value);
         }
         }
     };

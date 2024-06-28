@@ -60,7 +60,7 @@ impl AsciiString for Vec<u8> {
 }
 
 /// Bounding box
-#[derive(Serialize, Clone, Debug, Copy,  Default, DataTypeRead)]
+#[derive(Serialize, Clone, Debug, Copy, Default, DataTypeRead)]
 #[datatyperead(types("Vertex", "u8"))]
 pub struct BoundingBox<T: DataTypeRead + 'static>
 where
@@ -68,10 +68,6 @@ where
 {
     pub min: T,
     pub max: T,
-}
-
-impl DataTypeRead for BoundingBox<Vertex> {
-
 }
 
 #[derive(Debug, Serialize, Clone)]
@@ -105,6 +101,8 @@ pub enum DataType {
     VERTEX(Vertex),
     VECTOR3GENERIC,
     BOUNDINGBOXGENERIC,
+    BOUNDINGBOXU8(BoundingBox<u8>),
+    BOUNDINGBOXVERTEX(BoundingBox<Vertex>),
 }
 
 impl DataType {
@@ -113,7 +111,6 @@ impl DataType {
         self.clone()
     }
 }
-
 
 /// Directory entry: describes the position and size of a chunk of data inside a BSP File
 #[derive(Serialize, Clone, Debug, Copy, DataTypeRead)]

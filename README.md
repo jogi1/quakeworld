@@ -30,9 +30,9 @@ A rust library for working with quakeworld.
  * ascii_strings - when reading strings they will be converted to printable ascii, original bytes are also being kept see [here](./src/protocol/types.rs#L12)
 
 Features that are enabled by default are "mvd", "utils", "protocol", "state", "network", "trace", "connection", "crc" and "pak"
-Everything is serializable via [serde](https://github.com/serde-rs/serde) (json,...). Supports wasm as target ('it compiles' ```cargo build --target wasm32-unknown-unknown```) 
+Everything is serializable via [serde](https://github.com/serde-rs/serde) (json,...). Supports wasm as target ('it compiles' ```cargo build --target wasm32-unknown-unknown```)
 
-### Goals 
+### Goals
 probably in order of being implemented too
 * qwd - qwd format parsing
 * mvd - creating a mvd from states

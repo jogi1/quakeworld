@@ -2,6 +2,7 @@ use proc_macro::TokenStream;
 
 mod datatypeboundcheck;
 mod datatyperead;
+mod datatyperead_new;
 mod helpers;
 mod parsemessage;
 

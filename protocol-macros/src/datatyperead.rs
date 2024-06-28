@@ -1,12 +1,16 @@
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
-use syn::{parse_macro_input, DeriveInput, Type};
+use syn::{parse_macro_input, DeriveInput, Ident, Type};
 
 use crate::helpers::*;
 
 pub fn datatyperead_derive(input: TokenStream) -> TokenStream {
     // Parse the input tokens into a syntax tree
+    let input_clone = input.clone();
     let ast = parse_macro_input!(input as DeriveInput);
+    if ast.ident.to_string() == "BoundingBox".to_string() {
+        return crate::datatyperead_new::datatyperead_derive_new(input_clone);
+    }
 
     // Extract the name of the struct
     let struct_name = &ast.ident;
@@ -31,23 +35,6 @@ pub fn datatyperead_derive(input: TokenStream) -> TokenStream {
         }
         None => {}
     };
-    // if let syn::Type::Path(path) = ast {
-    //     println!("{}: {:?}", struct_name, path);
-    //     // if let Some(segment) = path.path.segments {
-    //     //     if let Some(args) = &segment.path.arguments {
-    //     //         if let syn::PathArguments::AngleBracketed(args) = args {
-    //     //             for arg in &args.args {
-    //     //                 println!("{}: {:?}", struct_name, arg);
-    //     //                 // if let syn::GenericArgument::Type(ty) = arg {
-    //     //                 // println!("{}: {:?}", struct_name, ty);
-    //     //                 // }
-    //     //             }
-    //     //         }
-    //     //     }
-    //     // }
-    // }
-
-    let mut generic_general = String::new();
     // Extract field names and types
     let fields = if let syn::Data::Struct(data_struct) = &ast.data {
         if let syn::Fields::Named(fields) = &data_struct.fields {
@@ -56,13 +43,13 @@ pub fn datatyperead_derive(input: TokenStream) -> TokenStream {
                 .iter()
                 .map(|f| {
                     let ft = &f.ty;
-                    let qt = quote! {#ft};
+                    // let qt = quote! {#ft};
                     let mut generic_field_type = "".to_string();
                     // extract generic type
                     if let Type::Path(path) = ft {
                         for segment in &path.path.segments {
-                            if let arguments = &segment.arguments {
-                                if let syn::PathArguments::AngleBracketed(args) = arguments {
+                            match &segment.arguments {
+                                syn::PathArguments::AngleBracketed(args) => {
                                     for arg in &args.args {
                                         if let syn::GenericArgument::Type(t) = arg {
                                             if let syn::Type::Path(p) = t {
@@ -76,6 +63,7 @@ pub fn datatyperead_derive(input: TokenStream) -> TokenStream {
                                         }
                                     }
                                 }
+                                _ => (),
                             }
                         }
                     }
@@ -211,7 +199,8 @@ pub fn datatyperead_derive(input: TokenStream) -> TokenStream {
                 let s = Self {
                     #(#field_assignment)*
                 };
-                trace_stop!(datareader, s, #struct_name);
+                let d = s.clone().to_datatype();
+                trace_stop!(datareader, d, #struct_name);
                 Ok(s)
             }
             fn to_datatype(&self) -> DataType {

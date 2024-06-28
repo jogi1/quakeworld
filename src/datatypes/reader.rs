@@ -206,7 +206,8 @@ macro_rules! datatypereader_generate_base_type {
 
         let v;
         v = $ty::from_le_bytes(a);
-        trace_stop!(datareader, v, $ty);
+        let d = v.clone().to_datatype();
+        trace_stop!(datareader, d, $ty);
         Ok(v)
         }
         fn to_datatype (&self) -> DataType {
