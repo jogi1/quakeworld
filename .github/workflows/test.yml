@@ -1,0 +1,18 @@
+name: Build & Test
+
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  build_and_test:
+    name: Build & Test (${{ matrix.toolchain }} on ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        toolchain: [stable, beta, nightly]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }}
+      - run: cargo build --all-targets --verbose
+      - run: cargo test --verbose

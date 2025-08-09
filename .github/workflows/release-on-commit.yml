@@ -6,6 +6,8 @@ on:
 
 jobs:
   changelog:
+    if: github.repository == 'jogi1/quakeworld'
+
     runs-on: ubuntu-latest
 
     steps:

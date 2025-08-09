@@ -82,9 +82,9 @@ gif = "0.13.1"
 # ratatui = { optional = true, features = ["crossterm"] }
 # crossterm = { optional = true }
 
-[[example]]
-name = "trace_generate"
-required-features = ["trace"]
+# [[example]]
+# name = "trace_generate"
+# required-features = ["trace"]
 
 [[bin]]
 name = "traceviewer"

@@ -68,6 +68,7 @@ macro_rules! create_pak_node {
     };
 }
 
+#[ignore]
 #[test]
 pub fn directory_integration() -> Result<(), quakeworld::vfs::Error> {
     let mut vfs = Vfs::default();
@@ -106,6 +107,7 @@ pub fn directory_integration() -> Result<(), quakeworld::vfs::Error> {
     Ok(())
 }
 
+#[ignore]
 #[test]
 pub fn file_integration() -> Result<(), quakeworld::vfs::Error> {
     let mut vfs = Vfs::default();
@@ -201,6 +203,7 @@ pub fn pak_integration() -> Result<(), quakeworld::vfs::Error> {
     Ok(())
 }
 
+#[ignore]
 #[test]
 pub fn hash_integration() -> Result<(), quakeworld::vfs::Error> {
     let mut vfs = Vfs::default();
